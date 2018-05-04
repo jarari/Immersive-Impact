@@ -1,6 +1,8 @@
 #pragma once
 #include <string.h>
 
+//THIS IS NOT A TEMPLATE CLASS/PARENT CLASS FOR WATCHERS
+//I'm just a fucking lazy bitch so I decided to make this one for copy pasta.
 //Copy & Paste this template for additional watchers.
 class Watcher {
 protected:

@@ -52,6 +52,7 @@ extern "C"	{
 		return true;
 	}
 
+	//On plugin load
 	bool SKSEPlugin_Load(const SKSEInterface * skse)	{	// Called by SKSE to load this plugin
 		_MESSAGE((PLUGIN_NAME + ((string)" loaded")).c_str());
 
@@ -60,6 +61,7 @@ extern "C"	{
 		//Check if the function registration was a success...
 		bool btest = g_papyrus->Register(Papyrus::RegisterFuncs);
 		if (btest) {
+			//Initialize watchers
 			CellLoadWatcher::InitHook();
 			MenuCloseWatcher::InitHook();
 			EquipWatcher::InitHook();
