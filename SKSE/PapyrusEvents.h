@@ -496,6 +496,8 @@ extern RegistrationSetHolder<NullParameters>						g_fistRequestRegs;
 extern RegistrationSetHolder<NullParameters>						g_initRequestRegs;
 extern RegistrationSetHolder<NullParameters>						g_notiRequestRegs;
 extern RegistrationSetHolder<NullParameters>						g_msgboxRequestRegs;
+extern RegistrationSetHolder<NullParameters>						g_configRegs;
+extern RegistrationSetHolder<NullParameters>						g_equipRequestRegs;
 
 struct SKSEModCallbackEvent
 {
@@ -630,12 +632,15 @@ public:
 	virtual	EventResult		ReceiveEvent(SKSEActionEvent * evn, EventDispatcher<SKSEActionEvent> * dispatcher);
 };
 
+class TESObjectWEAP;
 class BingleEventInvoker {
 public:
 	static void EquipFist(Actor *a);
+	static void EquipItem(Actor *a, TESForm* wep, UInt32 choice);
 	static void InitializeRequest();
 	static void SendNotification(BSFixedString msg);
 	static void ShowMessageBox(BSFixedString msg);
+	static void SyncConfig(UInt32 ctype, float v);
 };
 
 extern MenuEventHandler				g_menuEventHandler;

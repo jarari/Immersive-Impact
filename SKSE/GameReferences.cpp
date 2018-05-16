@@ -82,6 +82,10 @@ void Actor::UpdateHairColor()
 	}
 }
 
+bool Actor::IsOnMount() const {
+	return flags2.hasInteraction && extraData.HasType((UInt32)ExtraDataType::kExtraData_Interaction);
+}
+
 void Actor::UpdateSkinColor()
 {
 	TESNPC* npc = DYNAMIC_CAST(baseForm, TESForm, TESNPC);

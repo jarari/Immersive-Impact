@@ -5,7 +5,7 @@
 
 void PrintHEX(UInt32 ptr) {
 	std::stringstream hex;
-	hex << "0x" << std::hex << std::setfill('0') << std::uppercase << std::setw(16) << ptr;
+	hex << "0x" << std::hex << std::setfill('0') << std::uppercase << std::setw(8) << ptr;
 	gLog.Message(hex.str().c_str());
 }
 

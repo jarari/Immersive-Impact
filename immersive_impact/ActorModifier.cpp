@@ -21,7 +21,7 @@ void ActorModifier::RestrainMovement(Actor * a, bool restrain) {
 		}
 		return;
 	}
-	if (restrain && !isRestrained) {
+	if (restrain && !isRestrained && !((*g_thePlayer)->actorState.flags04 & (3 << 14))) {
 		isRestrained = true;
 		PlayerControls::GetSingleton()->inputHandlers[0]->enabled = false;
 		CALL_MEMBER_FN(&(a->animGraphHolder), SetAnimationVariableFloat)("Speed", 0);
@@ -39,32 +39,35 @@ void ActorModifier::RestrainView(Actor * a, bool restrain) {
 	if (!restrainEnabled) {
 		if (isViewRestrained) {
 			isViewRestrained = false;
-			PlayerControls::GetSingleton()->inputHandlers[1]->enabled = true;
+			PlayerCamera::GetSingleton()->unkD2 = 1;
+			//PlayerControls::GetSingleton()->inputHandlers[1]->enabled = true;
 		}
 		return;
 	}
 	if (restrain && !isViewRestrained) {
 		isViewRestrained = true;
-		PlayerControls::GetSingleton()->inputHandlers[1]->enabled = false;
+		PlayerCamera::GetSingleton()->unkD2 = 1;
+		//PlayerControls::GetSingleton()->inputHandlers[1]->enabled = false;
 	} else if (!restrain && isViewRestrained) {
 		isViewRestrained = false;
-		PlayerControls::GetSingleton()->inputHandlers[1]->enabled = true;
+		PlayerCamera::GetSingleton()->unkD2 = 0;
+		//PlayerControls::GetSingleton()->inputHandlers[1]->enabled = true;
 	}
 }
 
 void ActorModifier::ModifyAV(Actor * a, char *AVname, float v) {
 	UInt32 AVPtr = LookupActorValueByName(AVname);
-	a->actorValueOwner.SetBase(AVPtr, v - 1.0f);
+	a->actorValueOwner.SetBase(AVPtr, v);
 }
 
 void ActorModifier::SetCurrentAV(Actor * a, char *AVname, float v) {
 	UInt32 AVPtr = LookupActorValueByName(AVname);
-	a->actorValueOwner.SetCurrent(AVPtr, v - 1.0f);
+	a->actorValueOwner.SetCurrent(AVPtr, v);
 }
 
 float ActorModifier::GetAV(Actor * a, char *AVname) {
 	UInt32 AVPtr = LookupActorValueByName(AVname);
-	return a->actorValueOwner.GetBase(AVPtr);
+	return a->actorValueOwner.GetCurrent(AVPtr);
 }
 
 float ActorModifier::GetAVMax(Actor * a, char *AVname) {

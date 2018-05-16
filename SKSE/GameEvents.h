@@ -353,6 +353,20 @@ struct ShoutMastered
 	};
 };
 
+struct WeaponAttack {
+	struct Event {
+		/*
+		007426D1: 01B39C5C.SendEvent(01B40324)
+		struct `anonymous namespace'::FavoriteWeaponHandler +0000
+		+0000 02 struct `anonymous namespace'::FavoriteWeaponHandler | 012B610C
+		+0000 01 struct `anonymous namespace'::FavoriteItemHandler<class TESObjectWEAP,struct WeaponAttack::Event> | 012B6008
+		-->		+0000 00 class BSTEventSink<struct WeaponAttack::Event> | 012B5F9C
+		*/
+	};
+	static EventDispatcher<Event>* GetEventSource();
+};
+DEFINE_EVENTSINK(WeaponAttack::Event);
+
 struct BGSFootstepEvent
 {
 	UInt32	actorHandle;
@@ -446,10 +460,10 @@ struct TESEnterBleedoutEvent {
 
 // 10
 struct TESEquipEvent {
-	UInt32	unk_00; //Actor?
-	UInt32	unk_01; //Item?
+	UInt32	unk_00; //Actor
+	UInt32	unk_01; //Form ID
 	UInt32	unk_02;
-	UInt32	unk_03; //Slot?
+	UInt32	unk_03;
 };
 DEFINE_EVENTSINK(TESEquipEvent);
 
@@ -486,6 +500,7 @@ struct TESInitScriptEvent {
 
 struct TESLoadGameEvent {
 };
+DEFINE_EVENTSINK(TESLoadGameEvent);
 
 struct TESLockChangedEvent {
 };
@@ -616,6 +631,7 @@ struct TESWaitStopEvent {
 struct TESSwitchRaceCompleteEvent {
 	Actor	*actor;
 };
+DEFINE_EVENTSINK(TESSwitchRaceCompleteEvent);
 
 
 // 9F0

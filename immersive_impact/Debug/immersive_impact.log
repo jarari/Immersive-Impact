@@ -1,0 +1,4 @@
+﻿  Papyrus.cpp
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\Microsoft.Common.CurrentVersion.targets(1755,5): warning : The referenced project '..\..\common\common_vc9.vcxproj' does not exist.
+  immersive_impact.vcxproj -> C:\Users\racel\Documents\Visual Studio 2017\Projects\Immersive-Impact\Debug\immersive_impact.dll
+  immersive_impact.vcxproj -> C:\Users\racel\Documents\Visual Studio 2017\Projects\Immersive-Impact\Debug\immersive_impact.pdb (Full PDB)

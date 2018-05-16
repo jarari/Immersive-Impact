@@ -280,7 +280,8 @@ public:
 		kState_Walking = 0x80,
 		kState_Sprinting = 0x100,
 		kState_Sneaking = 0x200,
-		kState_Swimming = 0x400
+		kState_Swimming = 0x400,
+		kState_AttackState = 0xF0000000
 	};
 
 	UInt32	flags04;
@@ -422,19 +423,19 @@ public:
 	virtual void Unk_DF(void);
 	virtual void Unk_E0(void);
 	virtual void Unk_E1(void);
-	virtual bool IsInCombat(void);
-	virtual void Unk_E3(void);
-	virtual void Unk_E4(void);
-	virtual void Unk_E5(void);
-	virtual void Unk_E6(void);
-	virtual void Unk_E7(void);
-	virtual void Unk_E8(void);
-	virtual void Unk_E9(void);
-	virtual void Unk_EA(void);
-	virtual void Unk_EB(void);
-	virtual void Unk_EC(void);
-	virtual void Unk_ED(void);
-	virtual void Unk_EE(void);
+	virtual bool	IsInCombat(void);								// 006E1340
+	virtual void	Unk_E3(void);									// 006E2BF0 PlayerCharacter={ return; } 
+	virtual void	Unk_E4(void);									// 006E5510
+	virtual float	Unk_E5(void);									// 0066E8A0 { return 0.0f; }
+	virtual float	Unk_E6(void);									// 0066E8A0 { return 0.0f; }
+	virtual void	Unk_E7(void);									// 005EADD0 { return 0; }
+	virtual void	Unk_E8(void);									// 0092D110 { return false; }
+	virtual void	Unk_E9(UInt32 arg);								// 004091A0 { return false; }
+	virtual void	Unk_EA(void);									// 006C5FA0
+	virtual void	Unk_EB(void);									// 006AB7D0
+	virtual void	Unk_EC(void);									// 006AB850
+	virtual void	Unk_ED(void);									// 006C5F90
+	virtual void	OnWeaponSwing(void);							// 006E3D50
 	virtual void Unk_EF(void);
 	virtual void Unk_F0(void);
 	virtual void Unk_F1(void);
@@ -483,8 +484,19 @@ public:
 		kFlags_AIEnabled = 0x02,
 		kFlags_IsPlayerTeammate = 0x4000000
 	};
-	enum Flags2 {
-		kFlags_CanDoFavor = 0x80
+	struct Flags2 {
+		bool			unk00 : 1;					// 00 0x00000001
+		bool			hasInteraction : 1;			// 01 0x00000002
+		unsigned char	unk02 : 5;					// 02 0x0000007C
+		bool			canDoFavor : 1;				// 07 0x00000080
+		unsigned char	unk08 : 4;					// 08 0x00000F00
+		bool			trespassing : 1;			// 0C 0x00001000
+		bool			unk0C : 1;					// 0D 0x00002000
+		bool			killMove : 1;				// 0E 0x00004000
+		bool			attackedByAllActors : 1;	// 0F 0x00008000 - see Actor.SetAttackActorOnSight
+		bool			commandedActor : 1;			// 10 0x00010000 - see Actor.IsCommandedActor
+		bool			unk11 : 1;					// 11 0x00020000
+		bool			essential : 1;				// 12 0x00040000
 	};
 
 	enum SlotType {
@@ -514,7 +526,7 @@ public:
 	UInt32	unk12C;									// 12C
 	TESRace			* race;							// 130
 	UInt32	unk134;									// 134
-	UInt32	flags2;									// 138
+	Flags2	flags2;									// 138
 	UInt32	unk13C[(0x19C - 0x13C) >> 2];
 
 	TESForm * GetEquippedObject(bool abLeftHand);
@@ -528,6 +540,8 @@ public:
 
 	DEFINE_MEMBER_FN(UpdateWeaponAbility, void, 0x006ED980, TESForm*, BaseExtraList * extraData, bool bLeftHand);
 	DEFINE_MEMBER_FN(UpdateArmorAbility, void, 0x006E8650, TESForm*, BaseExtraList * extraData);
+
+	bool IsOnMount() const;
 
 	void UpdateSkinColor();
 	void UpdateHairColor();

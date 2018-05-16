@@ -21,6 +21,8 @@ RegistrationSetHolder<NullParameters>						g_fistRequestRegs;
 RegistrationSetHolder<NullParameters>						g_initRequestRegs;
 RegistrationSetHolder<NullParameters>						g_notiRequestRegs;
 RegistrationSetHolder<NullParameters>						g_msgboxRequestRegs;
+RegistrationSetHolder<NullParameters>						g_configRegs;
+RegistrationSetHolder<NullParameters>						g_equipRequestRegs;
 
 EventDispatcher<SKSEModCallbackEvent>	g_modCallbackEventDispatcher;
 EventDispatcher<SKSECameraEvent>		g_cameraEventDispatcher;
@@ -322,6 +324,12 @@ void BingleEventInvoker::EquipFist(Actor * a) {
 	);
 }
 
+void BingleEventInvoker::EquipItem(Actor * a, TESForm * wep, UInt32 choice) {
+	g_equipRequestRegs.ForEach(
+		EventQueueFunctor4<TESObjectREFR*, TESForm*, UInt32, UInt32>(BSFixedString("OnEquipRequested"), (TESObjectREFR*)a, (TESForm*)wep, choice, NULL)
+	);
+}
+
 void BingleEventInvoker::InitializeRequest() {
 	_MESSAGE("Requesting papyrus for initialization.");
 	g_initRequestRegs.ForEach(
@@ -340,5 +348,12 @@ void BingleEventInvoker::ShowMessageBox(BSFixedString msg) {
 	_MESSAGE("Requesting papyrus for a message box.");
 	g_fistRequestRegs.ForEach(
 		EventQueueFunctor1<BSFixedString>(BSFixedString("OnMessageBoxRequest"), msg)
+	);
+}
+
+void BingleEventInvoker::SyncConfig(UInt32 ctype, float v) {
+	_MESSAGE("Syncing config data");
+	g_configRegs.ForEach(
+		EventQueueFunctor2<UInt32, float>(BSFixedString("OnSyncConfig"), ctype, v)
 	);
 }

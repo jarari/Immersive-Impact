@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="ActorModifier.cpp" />
+    <ClCompile Include="CellLoadWatcher.cpp" />
+    <ClCompile Include="EquipWatcher.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="MenuCloseWatcher.cpp" />
+    <ClCompile Include="Papyrus.cpp" />
+    <ClCompile Include="WeaponSwingWatcher.cpp" />
+    <ClCompile Include="ConfigHandler.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ActorModifier.h" />
+    <ClInclude Include="CellLoadWatcher.h" />
+    <ClInclude Include="EquipWatcher.h" />
+    <ClInclude Include="MenuCloseWatcher.h" />
+    <ClInclude Include="Papyrus.h" />
+    <ClInclude Include="PluginData.h" />
+    <ClInclude Include="WatcherTemplate.h" />
+    <ClInclude Include="WeaponSwingWatcher.h" />
+    <ClInclude Include="..\simpleini-4.17\SimpleIni.h">
+      <Filter>INI library</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigHandler.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="INI library">
+      <UniqueIdentifier>{e6d1e8d1-73e5-4607-a562-60b0db888b0b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

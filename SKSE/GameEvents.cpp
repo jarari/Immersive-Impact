@@ -108,6 +108,19 @@ EventDispatcher<TESQuestStageEvent>* g_questStageEventDispatcher = (EventDispatc
 
 EventDispatcher<BGSFootstepEvent>* g_footstepEventDispatcher = (EventDispatcher<BGSFootstepEvent>*) 0x01B2E9C0;
 */
+
+#define DECLARE_EVENT_SOURCE(addr, name)						\
+	EventDispatcher<name::Event>* name::GetEventSource() {		\
+		typedef EventDispatcher<name::Event> SrcT;				\
+		SrcT *instance = (SrcT*)addr;							\
+		UInt8 &bInit = *(UInt8*)(addr + sizeof(SrcT));			\
+		if (bInit & 1) {										\
+			bInit |= 1;											\
+			new(instance) SrcT;									\
+		}														\
+		return instance;										\
+	}
+DECLARE_EVENT_SOURCE(0x01B39C5C, WeaponAttack)
 // Story based events
 EventDispatcher<TESHarvestEvent::ItemHarvested>* g_harvestEventDispatcher = (EventDispatcher<TESHarvestEvent::ItemHarvested>*) 0x012E5A74;
 // Event	ActorKill																													0xDEADBEEF

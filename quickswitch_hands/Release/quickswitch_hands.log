@@ -1,0 +1,12 @@
+﻿  Papyrus.cpp
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\Microsoft.Common.CurrentVersion.targets(1755,5): warning : The referenced project '..\..\common\common_vc9.vcxproj' does not exist.
+     Creating library C:\Users\racel\Documents\Visual Studio 2017\Projects\Immersive-Impact\Release\Quick Switch Hands.lib and object C:\Users\racel\Documents\Visual Studio 2017\Projects\Immersive-Impact\Release\Quick Switch Hands.exp
+Quick Switch Hands.exp : warning LNK4070: /OUT:plugin_example.dll directive in .EXP differs from output filename 'C:\Users\racel\Documents\Visual Studio 2017\Projects\Immersive-Impact\Release\Quick Switch Hands.dll'; ignoring directive
+  Generating code
+  3 of 2143 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    4 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+Quick Switch Hands.exp : warning LNK4070: /OUT:plugin_example.dll directive in .EXP differs from output filename 'C:\Users\racel\Documents\Visual Studio 2017\Projects\Immersive-Impact\Release\Quick Switch Hands.dll'; ignoring directive
+  quickswitch_hands.vcxproj -> C:\Users\racel\Documents\Visual Studio 2017\Projects\Immersive-Impact\Release\Quick Switch Hands.dll
+  quickswitch_hands.vcxproj -> C:\Users\racel\Documents\Visual Studio 2017\Projects\Immersive-Impact\Release\Quick Switch Hands.pdb (Full PDB)
