@@ -2,18 +2,26 @@ Scriptname BingleImmersiveFeedback extends ReferenceAlias
 
 BingleImmersiveFeedbackMCM property pMCMScript auto
 Weapon property Unarmed auto
+bool property shouldRestrain auto
 
 Function RegisterForFistRequest() native
 Function RegisterForInitRequest() native
 Function RegisterForNotificationRequest() native
 Function RegisterForMessageBoxRequest() native
-Function EvaluateTypes(string eventname, float pre, float swing1h, float swing2h, float swingdag, float swingfist, float post) global native
+Function EvaluateTypes(string eventname) global native
 Function RestrainMovement(Actor a, int restrain) global native
+Function EnableRestrainMovement() global native
+Function DisableRestrainMovement() global native
+Function RegisterForConfigRequest() native
 
 Actor player
 Function InitializeStuff()
 	pMCMScript.UpdateIFState(1)
 	player = GetActorReference()
+	RegisterForFistRequest()
+	RegisterForNotificationRequest()
+	RegisterForMessageBoxRequest()
+	RegisterForConfigRequest()
 	UnregisterForAnimationEvent(player, "preHitFrame")
 	UnregisterForAnimationEvent(player, "weaponSwing")
 	UnregisterForAnimationEvent(player, "AttackWinStart")
@@ -24,15 +32,24 @@ Function InitializeStuff()
 	bool d = RegisterForAnimationEvent(player, "weaponLeftSwing")
 	if(a && b && c && d)
 		pMCMScript.UpdateIFState(2)
+		if(shouldRestrain)
+			EnableRestrainMovement()
+		endif
 	endif
 EndFunction
 
 Event OnInit()
+	shouldRestrain = true
 	pMCMScript.UpdateIFState(0)
 	RegisterForInitRequest()
-	RegisterForFistRequest()
-	RegisterForNotificationRequest()
-	RegisterForMessageBoxRequest()
+EndEvent
+
+Event OnPlayerLoadGame()
+	RegisterForInitRequest()
+EndEvent
+
+Event OnSyncConfig(int type, float v)
+	pMCMScript.SyncConfig(type, v)
 EndEvent
 
 Event OnInitializeRequested(int dummy)
@@ -52,7 +69,7 @@ Event OnMessageBoxRequest(string content)
 EndEvent
 
 Event OnAnimationEvent(ObjectReference akSource, string asEventName)
-	EvaluateTypes(asEventName, pMCMScript.valuePreAttackSpeed, pMCMScript.valueSwingSpeed1H, pMCMScript.valueSwingSpeed, pMCMScript.valueSwingSpeedDagger, pMCMScript.valueSwingSpeedFist, pMCMScript.valueBaseSpeed)
+	EvaluateTypes(asEventName)
 	;Debug.Notification(asEventName + " fired.")
 	;if(asEventName == "preHitFrame")
 	;	(akSource as Actor).ForceAV("weaponSpeedMult", pMCMScript.valuePreAttackSpeed)

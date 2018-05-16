@@ -3,7 +3,7 @@ Scriptname BingleImmersiveFeedbackMCM extends SKI_ConfigBase
 ; SCRIPT VERSION ----------------------------------------------------------------------------------
 
 int function GetVersion()
-	return 4
+	return 5
 endFunction
 
 
@@ -16,17 +16,21 @@ int sliderSwingSpeed1HOID_S
 int sliderSwingSpeedDaggerOID_S
 int sliderSwingSpeedFistOID_S
 int sliderBaseSpeedOID_S
+int sliderCustomLOID_S
+int sliderCustomROID_S
 
 int toggleMovementRestrainOID_B
 
 ; Public
+BingleImmersiveFeedback property pBingleImmersiveFeedback auto
 float property valuePreAttackSpeed auto
 float property valueSwingSpeed auto
 float property valueSwingSpeed1H auto
 float property valueSwingSpeedDagger auto
 float property valueSwingSpeedFist auto
 float property valueBaseSpeed auto
-bool property shouldRestrain auto
+float property valueCustomL auto
+float property valueCustomR auto
 int property IFState auto
 
 ; Private
@@ -41,6 +45,10 @@ bool defaultRestrainOption
 ; Function
 Function EnableRestrainMovement() global native
 Function DisableRestrainMovement() global native
+Function UpdateConfig(string type, int ctype, float v) global native
+Function UpdateSaveConfig(string type, int ctype, float v) global native
+Function SaveConfig() global native
+
 
 ; INITIALIZATION ----------------------------------------------------------------------------------
 
@@ -63,13 +71,16 @@ Function UpdateV4()
 	defaultSwingSpeedFist = 1.25
 	valueSwingSpeedFist = defaultSwingSpeedFist
 	defaultRestrainOption = false
-	shouldRestrain = defaultRestrainOption
+EndFunction
+
+Function UpdateV5()
 EndFunction
 
 ; @implements SKI_ConfigBase
 event OnConfigInit()
-	Pages = new string[1]
+	Pages = new string[2]
 	Pages[0] = "$BINGLE_PAGE_SETTINGS"
+	Pages[1] = "$BINGLE_PAGE_CUSTOMWEAP"
 	
 	ModName = "Immersive Impact"
 	defaultPreAttackSpeed = 0.8
@@ -93,11 +104,6 @@ event OnVersionUpdate(int a_version)
 	
 	if(a_version >= 3 && CurrentVersion < 3)
 		UpdateV3()
-		Game.GetPlayer().ForceAV("weaponSpeedMult", 1)
-		Game.GetPlayer().ForceAV("LeftWeaponSpeedMult", 1)
-		if(CurrentVersion == 2)
-			Debug.Messagebox("Swing speed for 2H weapons and post-attack speed has been reset. Please check the settings.")
-		endif
 	endif
 	
 	if(a_version >= 4 && CurrentVersion < 3)
@@ -112,6 +118,26 @@ EndFunction
 
 ; EVENTS ------------------------------------------------------------------------------------------
 
+Function SyncConfig(int type, float v)
+	if(type == 2)
+		valuePreAttackSpeed = v
+	elseif(type == 3)
+		valueSwingSpeed1H = v
+	elseif(type == 4)
+		valueSwingSpeed = v
+	elseif(type == 5)
+		valueSwingSpeedDagger = v
+	elseif(type == 6)
+		valueSwingSpeedFist = v
+	elseif(type == 7)
+		valueBaseSpeed = v
+	elseif(type == 8)
+		valueCustomL = v
+	elseif(type == 9)
+		valueCustomR = v
+	endif
+EndFunction
+
 ; @implements SKI_ConfigBase
 event OnPageReset(string a_page)
 	UnloadCustomContent()
@@ -124,8 +150,8 @@ event OnPageReset(string a_page)
 		sliderSwingSpeedDaggerOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWINGDAGGER", valueSwingSpeedDagger, "x {2}")
 		sliderSwingSpeedFistOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWINGFIST", valueSwingSpeedFist, "x {2}")
 		sliderBaseSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_POSTATTACK", valueBaseSpeed, "x {2}")
-		toggleMovementRestrainOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_RESTRAINMOVEMENT", shouldRestrain)
-		if(shouldRestrain)
+		toggleMovementRestrainOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_RESTRAINMOVEMENT", pBingleImmersiveFeedback.shouldRestrain)
+		if(pBingleImmersiveFeedback.shouldRestrain)
 			EnableRestrainMovement()
 		else
 			DisableRestrainMovement()
@@ -141,14 +167,31 @@ event OnPageReset(string a_page)
 		endif
 		AddTextOptionST("StateText", "", stateText, opt)
 		SetCursorPosition(1)
+	elseif(a_page == "$BINGLE_PAGE_CUSTOMWEAP")
+		Actor p = Game.GetPlayer()
+		int flags = OPTION_FLAG_NONE
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		AddHeaderOption(p.GetEquippedWeapon(true).GetName())
+		if(p.GetEquippedWeapon(true) == None)
+			flags = OPTION_FLAG_DISABLED
+		endif
+		sliderCustomLOID_S = AddSliderOption("$BINGLE_PAGE_CUSTOMWEAPL_SWING", valueCustomL, "x {2}", flags)
+		
+		
+		SetCursorPosition(1)
+		AddHeaderOption(p.GetEquippedWeapon(false).GetName())
+		if(p.GetEquippedWeapon(false) != None)
+			flags = OPTION_FLAG_NONE
+		endif
+		sliderCustomROID_S = AddSliderOption("$BINGLE_PAGE_CUSTOMWEAPR_SWING", valueCustomR, "x {2}", flags)
 	endif
 endEvent
 
 event OnOptionSelect(int option)
 	if (option == toggleMovementRestrainOID_B)
-		shouldRestrain = !shouldRestrain
-		SetToggleOptionValue(toggleMovementRestrainOID_B, shouldRestrain)
-		if(shouldRestrain)
+		pBingleImmersiveFeedback.shouldRestrain = !pBingleImmersiveFeedback.shouldRestrain
+		SetToggleOptionValue(toggleMovementRestrainOID_B, pBingleImmersiveFeedback.shouldRestrain)
+		if(pBingleImmersiveFeedback.shouldRestrain)
 			EnableRestrainMovement()
 		else
 			DisableRestrainMovement()
@@ -181,7 +224,15 @@ event OnOptionSliderOpen(int option)
 		
 	elseif(option == sliderBaseSpeedOID_S)
 		SetSliderDialogStartValue(valueBaseSpeed)
-		SetSliderDialogDefaultValue(defaultBaseSpeed)
+		SetSliderDialogDefaultValue(defaultSwingSpeedFist)
+		
+	elseif(option == sliderCustomLOID_S)
+		SetSliderDialogStartValue(valueCustomL)
+		SetSliderDialogDefaultValue(1.0)
+		
+	elseif(option == sliderCustomROID_S)
+		SetSliderDialogStartValue(valueCustomR)
+		SetSliderDialogDefaultValue(1.0)
 	
 	endif
 endEvent
@@ -190,25 +241,41 @@ event OnOptionSliderAccept(int option, float value)
 	if(option == sliderPreAttackSpeedOID_S)
 		valuePreAttackSpeed = value
 		SetSliderOptionValue(sliderPreAttackSpeedOID_S, valuePreAttackSpeed, "x {2}")
+		UpdateSaveConfig("General", 2, valuePreAttackSpeed)
 		
 	elseif(option == sliderSwingSpeedOID_S)
 		valueSwingSpeed = value
 		SetSliderOptionValue(sliderSwingSpeedOID_S, valueSwingSpeed, "x {2}")
+		UpdateSaveConfig("General", 3, valueSwingSpeed)
 		
 	elseif(option == sliderSwingSpeed1HOID_S)
 		valueSwingSpeed1H = value
 		SetSliderOptionValue(sliderSwingSpeed1HOID_S, valueSwingSpeed1H, "x {2}")
+		UpdateSaveConfig("General", 4, valueSwingSpeed1H)
 		
 	elseif(option == sliderSwingSpeedDaggerOID_S)
 		valueSwingSpeedDagger = value
 		SetSliderOptionValue(sliderSwingSpeedDaggerOID_S, valueSwingSpeedDagger, "x {2}")
+		UpdateSaveConfig("General", 5, valueSwingSpeedDagger)
 		
 	elseif(option == sliderSwingSpeedFistOID_S)
 		valueSwingSpeedFist = value
 		SetSliderOptionValue(sliderSwingSpeedFistOID_S, valueSwingSpeedFist, "x {2}")
+		UpdateSaveConfig("General", 6, valueSwingSpeedFist)
 		
 	elseif(option == sliderBaseSpeedOID_S)
 		valueBaseSpeed = value
 		SetSliderOptionValue(sliderBaseSpeedOID_S, valueBaseSpeed, "x {2}")
+		UpdateSaveConfig("General", 7, valueBaseSpeed)
+		
+	elseif(option == sliderCustomLOID_S)
+		valueCustomL = value
+		SetSliderOptionValue(sliderCustomLOID_S, valueCustomL, "x {2}")
+		UpdateSaveConfig(Game.GetPlayer().GetEquippedWeapon(true).GetName(), 8, valueCustomL)
+		
+	elseif(option == sliderCustomROID_S)
+		valueCustomR = value
+		SetSliderOptionValue(sliderCustomROID_S, valueCustomR, "x {2}")
+		UpdateSaveConfig(Game.GetPlayer().GetEquippedWeapon(false).GetName(), 9, valueCustomR)
 	endif
 endEvent
