@@ -1,5 +1,6 @@
 #pragma once
 #include "SKSE/GameEvents.h"
+#include <string>
 
 class RaceSwitchWatcher : public BSTEventSink<TESSwitchRaceCompleteEvent> {
 protected:
