@@ -344,3 +344,31 @@ public:
 
 STATIC_ASSERT(offsetof(PlayerCamera, cameraStates) == 0x6C);
 STATIC_ASSERT(offsetof(PlayerCamera, padD6) == 0xD6);
+
+// ==== (himika) ====
+class TESCameraController
+{
+public:
+	TESCameraController();
+	virtual ~TESCameraController();
+
+	UInt32 unk00;
+	float  startRotZ; // 04
+	float  startRotX; // 08
+	float  endRotZ;   // 0C
+	float  endRotX;   // 10
+	UInt32 unk14;     // 14
+	UInt32 unk18;     // 18
+	UInt8  unk1C;     // 1C
+	UInt8  pad1D[3];  // 1D
+
+	static TESCameraController* GetSingleton() {
+		return (TESCameraController*)0x01277C58;
+	}
+	void Rotate(float startRotZ, float startRotX, float endRotZ, float endRotX, float fWait, float arg2) {
+		CALL_MEMBER_FN(this, Rotate)(startRotZ, startRotX, endRotZ, endRotX, fWait, arg2);
+	}
+
+	MEMBER_FN_PREFIX(TESCameraController);
+	DEFINE_MEMBER_FN(Rotate, void, 0x00736480, float, float, float, float, float, float);
+};

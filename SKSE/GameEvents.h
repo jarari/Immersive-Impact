@@ -463,7 +463,7 @@ struct TESEquipEvent {
 	UInt32	unk_00; //Actor
 	UInt32	unk_01; //Form ID
 	UInt32	unk_02;
-	UInt32	unk_03;
+	UInt32	unk_03; //Equipping? or unequipping?
 };
 DEFINE_EVENTSINK(TESEquipEvent);
 

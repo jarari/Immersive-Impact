@@ -8,8 +8,8 @@ class ConfigHandler {
 	static const char* filepath;
 public:
 	ConfigHandler();
-	static void LoadConfig(const char *type, int weapontype = 0, int slot = 0);
-	static void SetConfig(const char *type, BingleImmersiveImpact::ConfigType ctype, float v, bool save = false);
+	static void LoadConfig(UInt32 formId, int weapontype = 0, int slot = 0);
+	static void SetConfig(UInt32 formId, BingleImmersiveImpact::ConfigType ctype, float v, bool save = false);
 	static void SaveConfig();
 	static bool Exists(const char *type);
 };

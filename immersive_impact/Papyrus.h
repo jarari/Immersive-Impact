@@ -12,10 +12,25 @@ namespace BingleImmersiveImpact {
 		Speed_Post,
 		Speed_CustomL_Swing,
 		Speed_CustomR_Swing,
+		RestrainMovement,
+		AimHelper,
 		EndOfEnumMarker
 	};
+	static const char* ConfigTypeNames[ConfigType::EndOfEnumMarker] = {
+		"Offset",
+		"LeftOffset",
+		"Pre",
+		"Swing1h",
+		"Swing2h",
+		"SwingDag",
+		"SwingFist",
+		"Post",
+		"Custom_Swing",
+		"Custom_Swing",
+		"RestrainMovement",
+		"AimHelper"
+	};
 	float speedValues[];
-	const char *ConfigTypeNames[];
 	void UpdateFromConfig(ConfigType, float);
 	float GetDefault(ConfigType);
 	void SetCustomized(int slot, bool b);

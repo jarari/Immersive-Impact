@@ -7,7 +7,7 @@
 #include "Papyrus.h"
 #include "EquipWatcher.h"
 #include "MenuCloseWatcher.h"
-#include "CellLoadWatcher.h"
+#include "GameLoadWatcher.h"
 #include "WeaponSwingWatcher.h"
 #include "RaceSwitchWatcher.h"
 #include "ConfigHandler.h"
@@ -83,7 +83,7 @@ extern "C"	{
 		bool btest = g_papyrus->Register(Papyrus::RegisterFuncs);
 		if (btest) {
 			//Initialize watchers
-			CellLoadWatcher::InitHook();
+			GameLoadWatcher::InitHook();
 			MenuCloseWatcher::InitHook();
 			EquipWatcher::InitHook();
 			WeaponSwingWatcher::InitHook();

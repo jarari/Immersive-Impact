@@ -5,6 +5,7 @@
 #include <set>
 #include "PapyrusArgs.h"
 #include "Hooks_Scaleform.h"
+#include "immersive_impact/EquipWatcher.h"
 
 //// Global instances
 
@@ -23,6 +24,7 @@ RegistrationSetHolder<NullParameters>						g_notiRequestRegs;
 RegistrationSetHolder<NullParameters>						g_msgboxRequestRegs;
 RegistrationSetHolder<NullParameters>						g_configRegs;
 RegistrationSetHolder<NullParameters>						g_equipRequestRegs;
+RegistrationSetHolder<NullParameters>						g_translateToRegs;
 
 EventDispatcher<SKSEModCallbackEvent>	g_modCallbackEventDispatcher;
 EventDispatcher<SKSECameraEvent>		g_cameraEventDispatcher;
@@ -352,8 +354,14 @@ void BingleEventInvoker::ShowMessageBox(BSFixedString msg) {
 }
 
 void BingleEventInvoker::SyncConfig(UInt32 ctype, float v) {
-	_MESSAGE("Syncing config data");
 	g_configRegs.ForEach(
 		EventQueueFunctor2<UInt32, float>(BSFixedString("OnSyncConfig"), ctype, v)
+	);
+}
+
+void BingleEventInvoker::TranslateTo(float x, float y, float z, float armorWeight) {
+	float vel = 600.0f * (100.0f / (armorWeight + 200.0f) + 1.0f);
+	g_translateToRegs.ForEach(
+		EventQueueFunctor4<float, float, float, float>(BSFixedString("OnTranslateTo"), x, y, z, vel)
 	);
 }

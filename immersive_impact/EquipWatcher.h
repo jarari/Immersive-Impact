@@ -4,7 +4,6 @@
 class EquipWatcher : public BSTEventSink<TESEquipEvent> {
 protected:
 	static EquipWatcher *instance;
-	static bool isInitialized;
 public:
 	EquipWatcher() {
 		if (instance)
@@ -12,6 +11,7 @@ public:
 		instance = this;
 		_MESSAGE("Equip hook instance created.");
 	}
+	static bool isInitialized;
 
 	static EquipWatcher *GetInstance() {
 		return instance;
@@ -21,6 +21,10 @@ public:
 	static void InitHook();
 
 	static void ResetHook();
+
+	static void ScanArmorWeight();
+
+	static float playerArmorWeight;
 
 	virtual EventResult ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESEquipEvent>* src) override;
 };

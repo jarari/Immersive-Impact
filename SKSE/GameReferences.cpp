@@ -9,6 +9,7 @@
 const _CreateRefHandleByREFR	CreateRefHandleByREFR = (_CreateRefHandleByREFR)0x0065CC00;
 const _LookupREFRByHandle		LookupREFRByHandle = (_LookupREFRByHandle)0x004A9180;
 const _LookupREFRObjectByHandle		LookupREFRObjectByHandle = (_LookupREFRObjectByHandle)0x004951F0;
+const _MoveRefrToPosition MoveRefrToPosition = (_MoveRefrToPosition)0x90C9F0;
 
 const UInt32 * g_invalidRefHandle = (UInt32*)0x01310630;
 

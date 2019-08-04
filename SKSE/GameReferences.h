@@ -54,6 +54,9 @@ extern const _LookupREFRObjectByHandle LookupREFRObjectByHandle;
 
 extern const UInt32 * g_invalidRefHandle;
 
+typedef void (*_MoveRefrToPosition)(TESObjectREFR* source, UInt32* pTargetHandle, void* parentCell, void* worldSpace, NiPoint3* postion, NiPoint3* rotation);
+extern const _MoveRefrToPosition MoveRefrToPosition;
+
 // 4
 class IAnimationGraphManagerHolder
 {
@@ -243,6 +246,7 @@ public:
 	DEFINE_MEMBER_FN(IsOffLimits, bool, 0x004DA760);
 	DEFINE_MEMBER_FN(GetWeight, float, 0x004EA180);
 	DEFINE_MEMBER_FN(GetReferenceName, const char *, 0x004DE820);
+	DEFINE_MEMBER_FN(GetWorldspace, TESWorldSpace*, 0x4D5EB0);
 };
 
 STATIC_ASSERT(sizeof(TESObjectREFR) == 0x54);

@@ -498,6 +498,7 @@ extern RegistrationSetHolder<NullParameters>						g_notiRequestRegs;
 extern RegistrationSetHolder<NullParameters>						g_msgboxRequestRegs;
 extern RegistrationSetHolder<NullParameters>						g_configRegs;
 extern RegistrationSetHolder<NullParameters>						g_equipRequestRegs;
+extern RegistrationSetHolder<NullParameters>						g_translateToRegs;
 
 struct SKSEModCallbackEvent
 {
@@ -641,6 +642,7 @@ public:
 	static void SendNotification(BSFixedString msg);
 	static void ShowMessageBox(BSFixedString msg);
 	static void SyncConfig(UInt32 ctype, float v);
+	static void TranslateTo(float x, float y, float z, float vel);
 };
 
 extern MenuEventHandler				g_menuEventHandler;
