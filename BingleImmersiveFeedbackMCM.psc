@@ -3,7 +3,7 @@ Scriptname BingleImmersiveFeedbackMCM extends SKI_ConfigBase
 ; SCRIPT VERSION ----------------------------------------------------------------------------------
 
 int function GetVersion()
-	return 5
+	return 6
 endFunction
 
 
@@ -19,7 +19,8 @@ int sliderBaseSpeedOID_S
 int sliderCustomLOID_S
 int sliderCustomROID_S
 
-int toggleMovementRestrainOID_B
+int toggleRestrainMovementOID_B
+int toggleAimHelperOID_B
 
 ; Public
 BingleImmersiveFeedback property pBingleImmersiveFeedback auto
@@ -31,6 +32,8 @@ float property valueSwingSpeedFist auto
 float property valueBaseSpeed auto
 float property valueCustomL auto
 float property valueCustomR auto
+bool property valueRestrainMovement auto
+bool property valueAimHelper auto
 int property IFState auto
 
 ; Private
@@ -40,13 +43,12 @@ float defaultSwingSpeed1H
 float defaultSwingSpeedDagger
 float defaultSwingSpeedFist
 float defaultBaseSpeed
-bool defaultRestrainOption
+bool defaultRestrainMovement
+bool defaultAimHelper
 
 ; Function
-Function EnableRestrainMovement() global native
-Function DisableRestrainMovement() global native
-Function UpdateConfig(string type, int ctype, float v) global native
-Function UpdateSaveConfig(string type, int ctype, float v) global native
+Function UpdateConfig(int formId, int ctype, float v) global native
+Function UpdateSaveConfig(int formId, int ctype, float v) global native
 Function SaveConfig() global native
 
 
@@ -70,10 +72,17 @@ EndFunction
 Function UpdateV4()
 	defaultSwingSpeedFist = 1.25
 	valueSwingSpeedFist = defaultSwingSpeedFist
-	defaultRestrainOption = false
+	defaultRestrainMovement = false
 EndFunction
 
 Function UpdateV5()
+EndFunction
+
+Function UpdateV6()
+	valueRestrainMovement = defaultRestrainMovement
+	
+	defaultAimHelper = false
+	valueAimHelper = defaultAimHelper
 EndFunction
 
 ; @implements SKI_ConfigBase
@@ -94,6 +103,7 @@ event OnConfigInit()
 	UpdateV2()
 	UpdateV3()
 	UpdateV4()
+	UpdateV6()
 endEvent
 
 ; @implements SKI_QuestBase
@@ -106,8 +116,12 @@ event OnVersionUpdate(int a_version)
 		UpdateV3()
 	endif
 	
-	if(a_version >= 4 && CurrentVersion < 3)
+	if(a_version >= 4 && CurrentVersion < 4)
 		UpdateV4()
+	endif
+	
+	if(a_version >= 6 && CurrentVersion < 6)
+		UpdateV6()
 	endif
 endEvent
 
@@ -135,6 +149,18 @@ Function SyncConfig(int type, float v)
 		valueCustomL = v
 	elseif(type == 9)
 		valueCustomR = v
+	elseif(type == 10)
+		if(v == 1)
+			valueRestrainMovement = true
+		else
+			valueRestrainMovement = false
+		endif
+	elseif(type == 11)
+		if(v == 1)
+			valueAimHelper = true
+		else
+			valueAimHelper = false
+		endif
 	endif
 EndFunction
 
@@ -150,12 +176,8 @@ event OnPageReset(string a_page)
 		sliderSwingSpeedDaggerOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWINGDAGGER", valueSwingSpeedDagger, "x {2}")
 		sliderSwingSpeedFistOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWINGFIST", valueSwingSpeedFist, "x {2}")
 		sliderBaseSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_POSTATTACK", valueBaseSpeed, "x {2}")
-		toggleMovementRestrainOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_RESTRAINMOVEMENT", pBingleImmersiveFeedback.shouldRestrain)
-		if(pBingleImmersiveFeedback.shouldRestrain)
-			EnableRestrainMovement()
-		else
-			DisableRestrainMovement()
-		endif
+		toggleRestrainMovementOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_RESTRAINMOVEMENT", valueRestrainMovement)
+		toggleAimHelperOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_AIMHELPER", valueAimHelper)
 		string stateText = "$BINGLE_IF_NOTINIT"
 		int opt = OPTION_FLAG_DISABLED
 		if(IFState == 1)
@@ -188,13 +210,21 @@ event OnPageReset(string a_page)
 endEvent
 
 event OnOptionSelect(int option)
-	if (option == toggleMovementRestrainOID_B)
-		pBingleImmersiveFeedback.shouldRestrain = !pBingleImmersiveFeedback.shouldRestrain
-		SetToggleOptionValue(toggleMovementRestrainOID_B, pBingleImmersiveFeedback.shouldRestrain)
-		if(pBingleImmersiveFeedback.shouldRestrain)
-			EnableRestrainMovement()
+	if (option == toggleRestrainMovementOID_B)
+		valueRestrainMovement = !valueRestrainMovement
+		SetToggleOptionValue(toggleRestrainMovementOID_B, valueRestrainMovement)
+		if(valueRestrainMovement)
+			UpdateSaveConfig(0, 10, 1)
 		else
-			DisableRestrainMovement()
+			UpdateSaveConfig(0, 10, 0)
+		endif
+	elseif (option == toggleAimHelperOID_B)
+		valueAimHelper = !valueAimHelper
+		SetToggleOptionValue(toggleAimHelperOID_B, valueAimHelper)
+		if(valueAimHelper)
+			UpdateSaveConfig(0, 11, 1)
+		else
+			UpdateSaveConfig(0, 11, 0)
 		endif
 	endIf
 endEvent
@@ -241,41 +271,41 @@ event OnOptionSliderAccept(int option, float value)
 	if(option == sliderPreAttackSpeedOID_S)
 		valuePreAttackSpeed = value
 		SetSliderOptionValue(sliderPreAttackSpeedOID_S, valuePreAttackSpeed, "x {2}")
-		UpdateSaveConfig("General", 2, valuePreAttackSpeed)
+		UpdateSaveConfig(0, 2, valuePreAttackSpeed)
 		
 	elseif(option == sliderSwingSpeedOID_S)
 		valueSwingSpeed = value
 		SetSliderOptionValue(sliderSwingSpeedOID_S, valueSwingSpeed, "x {2}")
-		UpdateSaveConfig("General", 3, valueSwingSpeed)
+		UpdateSaveConfig(0, 3, valueSwingSpeed)
 		
 	elseif(option == sliderSwingSpeed1HOID_S)
 		valueSwingSpeed1H = value
 		SetSliderOptionValue(sliderSwingSpeed1HOID_S, valueSwingSpeed1H, "x {2}")
-		UpdateSaveConfig("General", 4, valueSwingSpeed1H)
+		UpdateSaveConfig(0, 4, valueSwingSpeed1H)
 		
 	elseif(option == sliderSwingSpeedDaggerOID_S)
 		valueSwingSpeedDagger = value
 		SetSliderOptionValue(sliderSwingSpeedDaggerOID_S, valueSwingSpeedDagger, "x {2}")
-		UpdateSaveConfig("General", 5, valueSwingSpeedDagger)
+		UpdateSaveConfig(0, 5, valueSwingSpeedDagger)
 		
 	elseif(option == sliderSwingSpeedFistOID_S)
 		valueSwingSpeedFist = value
 		SetSliderOptionValue(sliderSwingSpeedFistOID_S, valueSwingSpeedFist, "x {2}")
-		UpdateSaveConfig("General", 6, valueSwingSpeedFist)
+		UpdateSaveConfig(0, 6, valueSwingSpeedFist)
 		
 	elseif(option == sliderBaseSpeedOID_S)
 		valueBaseSpeed = value
 		SetSliderOptionValue(sliderBaseSpeedOID_S, valueBaseSpeed, "x {2}")
-		UpdateSaveConfig("General", 7, valueBaseSpeed)
+		UpdateSaveConfig(0, 7, valueBaseSpeed)
 		
 	elseif(option == sliderCustomLOID_S)
 		valueCustomL = value
 		SetSliderOptionValue(sliderCustomLOID_S, valueCustomL, "x {2}")
-		UpdateSaveConfig(Game.GetPlayer().GetEquippedWeapon(true).GetName(), 8, valueCustomL)
+		UpdateSaveConfig(Game.GetPlayer().GetEquippedWeapon(true).GetFormID(), 8, valueCustomL)
 		
 	elseif(option == sliderCustomROID_S)
 		valueCustomR = value
 		SetSliderOptionValue(sliderCustomROID_S, valueCustomR, "x {2}")
-		UpdateSaveConfig(Game.GetPlayer().GetEquippedWeapon(false).GetName(), 9, valueCustomR)
+		UpdateSaveConfig(Game.GetPlayer().GetEquippedWeapon(false).GetFormID(), 9, valueCustomR)
 	endif
 endEvent

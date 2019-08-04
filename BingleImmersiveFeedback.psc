@@ -2,17 +2,14 @@ Scriptname BingleImmersiveFeedback extends ReferenceAlias
 
 BingleImmersiveFeedbackMCM property pMCMScript auto
 Weapon property Unarmed auto
-bool property shouldRestrain auto
 
 Function RegisterForFistRequest() native
 Function RegisterForInitRequest() native
 Function RegisterForNotificationRequest() native
 Function RegisterForMessageBoxRequest() native
-Function EvaluateTypes(string eventname) global native
-Function RestrainMovement(Actor a, int restrain) global native
-Function EnableRestrainMovement() global native
-Function DisableRestrainMovement() global native
+Function EvaluateEvent(string eventname) global native
 Function RegisterForConfigRequest() native
+Function RegisterForTranslateToRequest() native
 
 Actor player
 Function InitializeStuff()
@@ -22,24 +19,27 @@ Function InitializeStuff()
 	RegisterForNotificationRequest()
 	RegisterForMessageBoxRequest()
 	RegisterForConfigRequest()
+	RegisterForTranslateToRequest()
 	UnregisterForAnimationEvent(player, "preHitFrame")
 	UnregisterForAnimationEvent(player, "weaponSwing")
-	UnregisterForAnimationEvent(player, "AttackWinStart")
 	UnregisterForAnimationEvent(player, "weaponLeftSwing")
+	UnregisterForAnimationEvent(player, "AttackWinStart")
+	UnregisterForAnimationEvent(player, "AttackWinStartLeft")
+	UnregisterForAnimationEvent(player, "AttackWinEnd")
+	UnregisterForAnimationEvent(player, "AttackWinEndLeft")
 	bool a = RegisterForAnimationEvent(player, "preHitFrame")
 	bool b = RegisterForAnimationEvent(player, "weaponSwing")
-	bool c = RegisterForAnimationEvent(player, "AttackWinStart")
-	bool d = RegisterForAnimationEvent(player, "weaponLeftSwing")
-	if(a && b && c && d)
+	bool c = RegisterForAnimationEvent(player, "weaponLeftSwing")
+	bool d = RegisterForAnimationEvent(player, "AttackWinStart")
+	bool e = RegisterForAnimationEvent(player, "AttackWinStartLeft")
+	bool f = RegisterForAnimationEvent(player, "AttackWinEnd")
+	bool g = RegisterForAnimationEvent(player, "AttackWinEndLeft")
+	if(a && b && c && d && e && f && g)
 		pMCMScript.UpdateIFState(2)
-		if(shouldRestrain)
-			EnableRestrainMovement()
-		endif
 	endif
 EndFunction
 
 Event OnInit()
-	shouldRestrain = true
 	pMCMScript.UpdateIFState(0)
 	RegisterForInitRequest()
 EndEvent
@@ -68,8 +68,12 @@ Event OnMessageBoxRequest(string content)
 	Debug.MessageBox(content)
 EndEvent
 
+Event OnTranslateTo(float x, float y, float z, float vel)
+	player.TranslateTo(x, y, z, player.GetAngleX(), player.GetAngleY(), player.GetAngleZ(), vel, 0)
+EndEvent
+
 Event OnAnimationEvent(ObjectReference akSource, string asEventName)
-	EvaluateTypes(asEventName)
+	EvaluateEvent(asEventName)
 	;Debug.Notification(asEventName + " fired.")
 	;if(asEventName == "preHitFrame")
 	;	(akSource as Actor).ForceAV("weaponSpeedMult", pMCMScript.valuePreAttackSpeed)
