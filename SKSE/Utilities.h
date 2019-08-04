@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 void PrintHEX(UInt32 ptr);
 

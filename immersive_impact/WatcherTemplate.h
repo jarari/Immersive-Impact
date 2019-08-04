@@ -1,5 +1,5 @@
 #pragma once
-#include <string.h>
+#include <string>
 
 //THIS IS NOT A TEMPLATE CLASS/PARENT CLASS FOR WATCHERS
 //I'm just a fucking lazy bitch so I decided to make this one for copy pasta.
