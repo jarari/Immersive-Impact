@@ -36,3 +36,11 @@
 # Logs
 *.log
 *.tlog
+
+# Debug files
+*/Debug/*
+*/*/Debug/*
+*.obj
+*.log
+*.tlog
+*.lastbuildstate
