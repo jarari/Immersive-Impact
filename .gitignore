@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+*.pdb
 
 # Precompiled Headers
 *.gch
@@ -31,3 +32,7 @@
 *.exe
 *.out
 *.app
+
+# Logs
+*.log
+*.tlog
