@@ -2,17 +2,18 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="ActorModifier.cpp" />
-    <ClCompile Include="CellLoadWatcher.cpp" />
     <ClCompile Include="EquipWatcher.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MenuCloseWatcher.cpp" />
     <ClCompile Include="Papyrus.cpp" />
     <ClCompile Include="WeaponSwingWatcher.cpp" />
     <ClCompile Include="ConfigHandler.cpp" />
+    <ClCompile Include="RaceSwitchWatcher.cpp" />
+    <ClCompile Include="GameLoadWatcher.cpp" />
+    <ClCompile Include="AimHelperThread.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActorModifier.h" />
-    <ClInclude Include="CellLoadWatcher.h" />
     <ClInclude Include="EquipWatcher.h" />
     <ClInclude Include="MenuCloseWatcher.h" />
     <ClInclude Include="Papyrus.h" />
@@ -23,6 +24,9 @@
       <Filter>INI library</Filter>
     </ClInclude>
     <ClInclude Include="ConfigHandler.h" />
+    <ClInclude Include="RaceSwitchWatcher.h" />
+    <ClInclude Include="GameLoadWatcher.h" />
+    <ClInclude Include="AimHelperThread.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
