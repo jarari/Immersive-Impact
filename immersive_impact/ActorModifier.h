@@ -3,6 +3,19 @@
 
 #define ADDR_UnkCellInfo						0x012E32E8
 class Actor;
+class TargetData {
+public:
+	TargetData() {
+		target = nullptr;
+		size = 0;
+	};
+	TargetData(Actor* _target, float _size) {
+		target = _target;
+		size = _size;
+	}
+	Actor* target;
+	float size;
+};
 class ActorModifier {
 public:
 	static void EnableRestraint(bool b);

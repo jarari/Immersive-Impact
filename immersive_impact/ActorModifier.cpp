@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <SKSE\PapyrusGame.h>
 #include <immersive_impact\AimHelperThread.h>
+#include <SKSE\GameRTTI.h>
 
 typedef UInt32(*_LookupActorValueByName)(const char * name);
 extern const _LookupActorValueByName LookupActorValueByName;
@@ -92,15 +93,22 @@ void NormalizeVector(float &x, float &y, float &z) {
 	z /= scale;
 }
 
-void GetCameraForward(TESCamera* cam, NiPoint3* pos) {
+void NormalizeVector(NiPoint3 &vec) {
+	float scale = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+	vec.x /= scale;
+	vec.y /= scale;
+	vec.z /= scale;
+}
+
+void GetCameraForward(TESCamera* cam, NiPoint3* vecnorm) {
 	NiMatrix33 transform = cam->cameraNode->m_localTransform.rot;
 	float x = -transform.data[1][0];
 	float y = transform.data[0][0];
 	float z = transform.data[2][1];
 	NormalizeVector(x, y, z);
-	pos->x = x;
-	pos->y = y;
-	pos->z = z;
+	vecnorm->x = x;
+	vecnorm->y = y;
+	vecnorm->z = z;
 }
 
 bool GetNodePosition(Actor* actor, const char* nodeName, NiPoint3* point) {
@@ -160,15 +168,16 @@ bool GetTargetPos(TESObjectREFR* target, NiPoint3* pos) {
 	return true;
 }
 
-Actor* FindClosestToAim(float maxAngle, float minDistance, float maxDistance) {
+TargetData FindClosestToAim(float maxAngle, float minDistance, float maxDistance) {
 	tArray<UInt32>* actorHandles = &(*playerCellInfo)->actorHandles;
 	if (actorHandles->count == 0)
-		return nullptr;
-	std::vector<std::pair<double, Actor*>> vec;
-	vec.reserve(actorHandles->count);
+		return TargetData();
 
 	UInt32 handle;
 	size_t i = 0;
+	Actor* a = nullptr;
+	float lastLowestScore = 9999;
+	float size = 0;
 	while (actorHandles->GetNthItem(i++, handle)) {
 		TESObjectREFR* ref = NULL;
 		if (handle != *g_invalidRefHandle)
@@ -177,18 +186,25 @@ Actor* FindClosestToAim(float maxAngle, float minDistance, float maxDistance) {
 		if (ref && ref->formType == kFormType_Character && !ref->IsDead(1))	{
 			PlayerCharacter* player = *g_thePlayer;
 			NiPoint3 playerPos;
-			player->GetMarkerPosition(&playerPos);
-			playerPos.x = player->pos.x;
-			playerPos.y = player->pos.y;
-			Actor* actor = (Actor*)ref;
+			GetTargetPos(player, &playerPos);
+			Actor* target = (Actor*)ref;
 			NiPoint3 targetPos;
-			GetTargetPos(actor, &targetPos);
+			GetTargetPos(target, &targetPos);
 			float dx = targetPos.x - playerPos.x;
 			float dy = targetPos.y - playerPos.y;
 			float dz = targetPos.z - playerPos.z;
 			float dd = sqrt(dx * dx + dy * dy + dz * dz);
 
-			if (dd >= minDistance && dd <= maxDistance && actor != player)
+			//Arbitrary bounding sphere around the target
+			TESNPC* targetCasted = DYNAMIC_CAST(target->baseForm, TESForm, TESNPC);
+			UInt16 bx = targetCasted->bounds.x;
+			UInt16 by = targetCasted->bounds.y;
+			//They're actually int16 values, but SKSE is reading them as UInt16 values so we should convert them.
+			int r = min(bx >= 32768 ? 65535 - bx : bx,
+				by >= 32768 ? 65535 - by : by);
+			float actualMaxDistance = maxDistance + r;
+
+			if (dd >= minDistance && dd <= actualMaxDistance && target != player)
 			{
 				NiPoint3 camForward;
 				GetCameraForward(PlayerCamera::GetSingleton(), &camForward);
@@ -197,18 +213,21 @@ Actor* FindClosestToAim(float maxAngle, float minDistance, float maxDistance) {
 				float ang = std::acos(dot) * 180.0f / M_PI;
 
 				if (isnan(ang) == 0 && ang >= 0 && ang <= maxAngle) {
-					_MESSAGE("Score : %f", dd / maxDistance + ang / maxAngle);
-					vec.push_back(std::make_pair(dd / maxDistance + ang / maxAngle, actor));
+					float score = dd / actualMaxDistance + ang / maxAngle;
+					if (score < lastLowestScore) {
+						lastLowestScore = score;
+						a = target;
+						size = r;
+					}
 				}
 			}
 		}
 	}
 
-	if (vec.size() == 0)
-		return nullptr;
+	if (a == nullptr)
+		return TargetData();
 
-	std::sort(vec.begin(), vec.end());
-	return vec.front().second;
+	return TargetData(a, size);
 }
 
 static void SetPlayerAngle(float rotZ, float rotX, float wait)
@@ -323,36 +342,35 @@ void ActorModifier::EnableAimHelper(bool b) {
 	aimHelperEnabled = b;
 }
 
+
 bool aimLocked = false;
 Actor* aimTarget = nullptr;
 float maxAng = 60.0f;
-//float minDist = 80;
-//float maxDist = 350;
 void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	PlayerCharacter* player = *g_thePlayer;
 	if (!aimHelperEnabled || isRidingHorse(player))
 		return;
-	aimTarget = FindClosestToAim(maxAng, aimHelperMinDist, aimHelperMaxDist);
+	TargetData td;
+	td = FindClosestToAim(maxAng, aimHelperMinDist, aimHelperMaxDist);
+	aimTarget = td.target;
 	if (aimTarget == nullptr)
 		return;
 	AimHelperThread::RequestThread(fn<void, Actor*, float>(LookAtRef), aimTarget, 50);
 
-	NiPoint3 pos = player->pos;
+	NiPoint3 pos;
+	GetTargetPos(player, &pos);
 	UInt32 refHandle = player->CreateRefHandle();
 	float dx = aimTarget->pos.x - pos.x;
 	float dy = aimTarget->pos.y - pos.y;
 	float dz = aimTarget->pos.z - pos.z;
 	NormalizeVector(dx, dy, dz);
-	dx *= aimHelperMinDist;
-	dy *= aimHelperMinDist;
-	dz *= aimHelperMinDist;
-	pos.x = aimTarget->pos.x - dx;
-	pos.y = aimTarget->pos.y - dy;
-	pos.z = aimTarget->pos.z - dz;
+	dx *= td.size;
+	dy *= td.size;
+	dz *= td.size;
 
 	//player->pos = pos;
 	//MoveRefrToPosition(player, &refHandle, player->parentCell, CALL_MEMBER_FN(player, GetWorldspace)() , &pos, &(player->rot));
-	BingleEventInvoker::TranslateTo(pos.x, pos.y, pos.z, EquipWatcher::playerArmorWeight);
+	BingleEventInvoker::TranslateTo(aimTarget->pos.x - dx, aimTarget->pos.y - dy, player->pos.z, EquipWatcher::playerArmorWeight);
 
 	aimTarget = nullptr;
 }
