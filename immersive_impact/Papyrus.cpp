@@ -88,8 +88,8 @@ namespace BingleImmersiveImpact {
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_LeftOffset]);
 
 
-			float minRange = max((*g_thePlayer)->race->data.handReach * 1.1f - 10.0f, 75.0f);
-			float maxRange = (*g_thePlayer)->race->data.handReach * 1.1f * 4.0f;
+			float minRange = max((*g_thePlayer)->race->data.handReach - 5.0f, 50.0f);
+			float maxRange = (*g_thePlayer)->race->data.handReach * 3.0f;
 			ActorModifier::LockAim(minRange, maxRange);
 		} 
 		//If the event is weaponSwing
