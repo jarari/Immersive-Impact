@@ -11,7 +11,7 @@ class AimHelperThread {
 	private:
 		static void threadFunc(fn<void, Actor*, float> func, Actor* target, float wait) {
 			while (isRunning) {
-				if (target && target != nullptr) {
+				if (target != nullptr) {
 					if(!target->IsDead(1))
 						func(target, wait);
 				}

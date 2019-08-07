@@ -19,7 +19,7 @@ enum {
 template<class T, UInt32 Type>
 UInt8 CustomHandlerFunctor<Actor, UInt32>::ProcessAction(Actor * actor, UInt32 unk04) {
 	ActorModifier::RestrainMovement(actor, false);
-	ActorModifier::RestrainView(actor, false);
+	//ActorModifier::RestrainView(actor, false);
 	ActorModifier::UnlockAim();
 	ActorModifier::ModifyAV(actor, "WeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Post] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Offset]);
 	ActorModifier::ModifyAV(actor, "LeftWeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Post] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_LeftOffset]);

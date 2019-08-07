@@ -8,13 +8,16 @@ public:
 	TargetData() {
 		target = nullptr;
 		size = 0;
+		dd = 0;
 	};
-	TargetData(Actor* _target, float _size) {
+	TargetData(Actor* _target, UInt16 _size, float _dd) {
 		target = _target;
 		size = _size;
+		dd = _dd;
 	}
 	Actor* target;
-	float size;
+	UInt16 size;
+	float dd;
 };
 class ActorModifier {
 public:

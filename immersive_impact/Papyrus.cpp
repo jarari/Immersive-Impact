@@ -81,53 +81,57 @@ namespace BingleImmersiveImpact {
 				++it;
 			}
 			//Tried OnActorAction, but it sucks. I figured this way is more reliable.
-			ActorModifier::RestrainMovement((Actor*)(*g_thePlayer), 1);
-			ActorModifier::RestrainView((Actor*)(*g_thePlayer), 1);			
+			ActorModifier::RestrainMovement((Actor*)(*g_thePlayer), true);
+			ActorModifier::RestrainView((Actor*)(*g_thePlayer), false);			
 
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_Offset]);
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_LeftOffset]);
 
 
-			float minRange = max((*g_thePlayer)->race->data.handReach - 5.0f, 50.0f);
+			float minRange = max((*g_thePlayer)->race->data.handReach * 1.5f, 60.0f);
 			float maxRange = (*g_thePlayer)->race->data.handReach * 3.0f;
 			ActorModifier::LockAim(minRange, maxRange);
 		} 
-		//If the event is weaponSwing
-		else if (event == s_sw) {
-			if (customizedR) {
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_CustomR_Swing] + speedValues[ConfigType::Speed_Offset]);
-			}
-			else if (papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 1)) {
-				TESObjectWEAP* wep = ((TESObjectWEAP*)(papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 1)));
-				int weptype = wep->type();
-				ModifyAttackSpeedByTypes(wep, weptype, true);
-			}
-		}
-		//If the event is weaponLeftSwing
-		else if (event == s_lsw) {
-			if (customizedL) {
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_CustomL_Swing] + speedValues[ConfigType::Speed_LeftOffset]);
-			}
-			else if (papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 0)) {
-				TESObjectWEAP* wep = ((TESObjectWEAP*)(papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 0)));
-				int weptype = wep->type();
-				ModifyAttackSpeedByTypes(wep, weptype, false);
-			}
 
+		else if (event == s_sw || event == s_lsw) {
+			//If the event is weaponSwing
+			if (event == s_sw) {
+				ActorModifier::RestrainView((Actor*)(*g_thePlayer), true);
+				if (customizedR) {
+					ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_CustomR_Swing] + speedValues[ConfigType::Speed_Offset]);
+				}
+				else if (papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 1)) {
+					TESObjectWEAP* wep = ((TESObjectWEAP*)(papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 1)));
+					int weptype = wep->type();
+					ModifyAttackSpeedByTypes(wep, weptype, true);
+				}
+			}
+			//If the event is weaponLeftSwing
+			else if (event == s_lsw) {
+				ActorModifier::RestrainView((Actor*)(*g_thePlayer), true);
+				if (customizedL) {
+					ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_CustomL_Swing] + speedValues[ConfigType::Speed_LeftOffset]);
+				}
+				else if (papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 0)) {
+					TESObjectWEAP* wep = ((TESObjectWEAP*)(papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 0)));
+					int weptype = wep->type();
+					ModifyAttackSpeedByTypes(wep, weptype, false);
+				}
+			}
 		}
+		
 		//If the event is AttackWinStart or AttackWinStartLeft
 		else if (event == s_post || event == s_lpost) {
-			ActorModifier::RestrainMovement((Actor*)(*g_thePlayer), 0);
-
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Post] + speedValues[ConfigType::Speed_Offset]);
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Post] + speedValues[ConfigType::Speed_LeftOffset]);
 			//_MESSAGE("post %f", speedValues[ConfigType::Speed_Post]);
 
+			ActorModifier::RestrainMovement((Actor*)(*g_thePlayer), false);
 			ActorModifier::UnlockAim();
 		}
 		//If the event is AttackWinEnd or AttackWinEndLeft
 		else if (event == s_end || event == s_lend) {
-			ActorModifier::RestrainView((Actor*)(*g_thePlayer), 0);
+			//ActorModifier::RestrainView((Actor*)(*g_thePlayer), false);
 		}
 	}
 

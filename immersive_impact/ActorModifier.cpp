@@ -5,6 +5,7 @@
 #include "SKSE/GameReferences.h"
 #include "SKSE/PapyrusEvents.h"
 #include "SKSE/NiNodes.h"
+#include "SKSE/NiExtraData.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <algorithm>
@@ -22,6 +23,10 @@ bool isRidingHorse(Actor* a) {
 bool restrainEnabled = false;
 void ActorModifier::EnableRestraint(bool b) {
 	restrainEnabled = b;
+	if (!b && (*g_thePlayer)->GetNiNode()) {
+		ActorModifier::RestrainMovement(*g_thePlayer, false);
+		ActorModifier::RestrainView(*g_thePlayer, false);
+	}
 }
 
 bool isRestrained = false;
@@ -100,15 +105,18 @@ void NormalizeVector(NiPoint3 &vec) {
 	vec.z /= scale;
 }
 
-void GetCameraForward(TESCamera* cam, NiPoint3* vecnorm) {
-	NiMatrix33 transform = cam->cameraNode->m_localTransform.rot;
-	float x = -transform.data[1][0];
-	float y = transform.data[0][0];
-	float z = transform.data[2][1];
+void GetNiNodeForward(NiNode* node, NiPoint3* vecnorm) {
+	float x = -node->m_localTransform.rot.data[1][0];
+	float y = node->m_localTransform.rot.data[0][0];
+	float z = node->m_localTransform.rot.data[2][1];
 	NormalizeVector(x, y, z);
 	vecnorm->x = x;
 	vecnorm->y = y;
 	vecnorm->z = z;
+}
+
+void GetCameraForward(TESCamera* cam, NiPoint3* vecnorm) {
+	GetNiNodeForward(cam->cameraNode, vecnorm);
 }
 
 bool GetNodePosition(Actor* actor, const char* nodeName, NiPoint3* point) {
@@ -168,7 +176,19 @@ bool GetTargetPos(TESObjectREFR* target, NiPoint3* pos) {
 	return true;
 }
 
-TargetData FindClosestToAim(float maxAngle, float minDistance, float maxDistance) {
+void SetMatrix33(float a, float b, float c, float d, float e, float f, float g, float h, float i, NiMatrix33& mat) {
+	mat.data[0][0] = a;
+	mat.data[0][1] = b;
+	mat.data[0][2] = c;
+	mat.data[1][0] = d;
+	mat.data[1][1] = e;
+	mat.data[1][2] = f;
+	mat.data[2][0] = g;
+	mat.data[2][1] = h;
+	mat.data[2][2] = i;
+}
+
+TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 	tArray<UInt32>* actorHandles = &(*playerCellInfo)->actorHandles;
 	if (actorHandles->count == 0)
 		return TargetData();
@@ -177,7 +197,10 @@ TargetData FindClosestToAim(float maxAngle, float minDistance, float maxDistance
 	size_t i = 0;
 	Actor* a = nullptr;
 	float lastLowestScore = 9999;
-	float size = 0;
+	UInt16 size = 0;
+	float dist = 0;
+	NiPoint3 camForward;
+	GetCameraForward(PlayerCamera::GetSingleton(), &camForward);
 	while (actorHandles->GetNthItem(i++, handle)) {
 		TESObjectREFR* ref = NULL;
 		if (handle != *g_invalidRefHandle)
@@ -185,29 +208,92 @@ TargetData FindClosestToAim(float maxAngle, float minDistance, float maxDistance
 
 		if (ref && ref->formType == kFormType_Character && !ref->IsDead(1))	{
 			PlayerCharacter* player = *g_thePlayer;
-			NiPoint3 playerPos;
-			GetTargetPos(player, &playerPos);
+			//GetTargetPos doesn't work on the player, so we get the target's position and match z value to feet.
+			NiPoint3 playerPos = player->pos;
 			Actor* target = (Actor*)ref;
 			NiPoint3 targetPos;
 			GetTargetPos(target, &targetPos);
+			targetPos.z = target->pos.z;
 			float dx = targetPos.x - playerPos.x;
 			float dy = targetPos.y - playerPos.y;
 			float dz = targetPos.z - playerPos.z;
 			float dd = sqrt(dx * dx + dy * dy + dz * dz);
 
 			//Arbitrary bounding sphere around the target
-			TESNPC* targetCasted = DYNAMIC_CAST(target->baseForm, TESForm, TESNPC);
-			UInt16 bx = targetCasted->bounds.x;
-			UInt16 by = targetCasted->bounds.y;
-			//They're actually int16 values, but SKSE is reading them as UInt16 values so we should convert them.
-			int r = min(bx >= 32768 ? 65535 - bx : bx,
-				by >= 32768 ? 65535 - by : by);
+			TESBoundObject* targetCasted = DYNAMIC_CAST(target->baseForm, TESForm, TESBoundObject);
+			UInt16 bx, by, bx2, by2;
+			bx = targetCasted->bounds.x;
+			if (bx != 0) {
+				by = targetCasted->bounds.y;
+				bx2 = targetCasted->bounds2.x;
+				by2 = targetCasted->bounds2.y;
+				//They're actually int16 values, but SKSE is reading them as UInt16 values so we should convert them.
+				bx = bx >= 32768 ? -((int)bx - 65536) : bx;
+				by = by >= 32768 ? -((int)by - 65536) : by;
+				bx2 = bx2 >= 32768 ? -((int)bx2 - 65536) : bx2;
+				by2 = by2 >= 32768 ? -((int)by2 - 65536) : by2;
+			}
+			else {
+				bool bbxExists = false;
+				if (target->GetNiNode()->m_extraDataLen > 0) {
+					for (int i = 0; i < target->GetNiNode()->m_extraDataLen; i++) {
+						NiExtraData* exData = target->GetNiNode()->m_extraData[i];
+						if (strcmp(exData->m_pcName, "BBX") == 0) {
+							bx = (UInt32)round(*((float*)((char*)exData + 0x18)));
+							bx2 = 0;
+							by = (UInt32)round(*((float*)((char*)exData + 0x1C)));
+							by2 = 0;
+							bbxExists = true;
+							break;
+						}
+					}
+				}
+				if(!bbxExists) {
+					//Just put "reasonable" numbers if we couldn't get any bound data.
+					bx = 16;
+					by = 16;
+					bx2 = 16;
+					by2 = 16;
+				}
+			}
+			float sizex = (bx + bx2) / 2.0f;
+			float sizey = (by + by2) / 2.0f;
+
+			NiPoint3 targetForward;
+			float roll = target->rot.z;
+			NiMatrix33 m_roll;
+			SetMatrix33(cos(roll), -sin(roll), 0,
+						sin(roll),	cos(roll),		0,
+						0,			0,				1,
+						m_roll);
+			float pitch = target->rot.x;
+			NiMatrix33 m_pitch;
+			SetMatrix33(1, 0, 0,
+						0,			cos(pitch),		-sin(pitch), 
+						0,			sin(pitch),		cos(pitch),
+						m_pitch);
+			float yaw = target->rot.y;
+			NiMatrix33 m_yaw;
+			SetMatrix33(cos(yaw), 0, sin(yaw),
+						0,			1,				0, 
+						-sin(yaw),	0,				cos(yaw),
+						m_yaw);
+			targetForward = m_yaw * m_pitch * m_roll * NiPoint3(1, 0, 0);
+			float pt_dot = targetForward.x * camForward.x + targetForward.y * camForward.y + targetForward.z * camForward.z;
+			float pt_ang = std::acos(pt_dot) * 180.0f / M_PI;
+			UInt16 r;
+			//If the angle between target's forward and cam's forward is bigger than 45 and smaller than 135, 
+			//then use x size as bounding sphere size.
+			if (isnan(pt_ang) == 0) {
+				r = pt_ang > 45 && pt_ang < 135 ? sizey : sizex;
+			}
+			else {
+				r = min(sizex, sizey);
+			}
 			float actualMaxDistance = maxDistance + r;
 
-			if (dd >= minDistance && dd <= actualMaxDistance && target != player)
+			if (dd <= actualMaxDistance && target != player)
 			{
-				NiPoint3 camForward;
-				GetCameraForward(PlayerCamera::GetSingleton(), &camForward);
 				NormalizeVector(dx, dy, dz);
 				float dot = dx * camForward.x + dy * camForward.y + dz * camForward.z;
 				float ang = std::acos(dot) * 180.0f / M_PI;
@@ -218,6 +304,7 @@ TargetData FindClosestToAim(float maxAngle, float minDistance, float maxDistance
 						lastLowestScore = score;
 						a = target;
 						size = r;
+						dist = dd;
 					}
 				}
 			}
@@ -227,18 +314,18 @@ TargetData FindClosestToAim(float maxAngle, float minDistance, float maxDistance
 	if (a == nullptr)
 		return TargetData();
 
-	return TargetData(a, size);
+	return TargetData(a, size, dist);
 }
 
-static void SetPlayerAngle(float rotZ, float rotX, float wait)
+void SetPlayerAngle(float rotZ, float rotX, float wait)
 {
 	PlayerCharacter* player = *g_thePlayer;
-	TESCameraController* controller = TESCameraController::GetSingleton();
-
-	if (wait < 20)
-		wait = 20;
-
-	controller->Rotate(player->rot.z, player->rot.x, rotZ, rotX, wait, 0);
+	/*TESCameraController* controller = TESCameraController::GetSingleton();
+	
+	controller->Rotate(player->rot.z, player->rot.x, rotZ, rotX, wait, 0);*/
+	//Why rotate cam when view's restrained? Fuck it.
+	player->rot.z = rotZ;
+	player->rot.x = rotX;
 }
 
 // カメラが一人称視点かどうか調べる
@@ -345,17 +432,24 @@ void ActorModifier::EnableAimHelper(bool b) {
 
 bool aimLocked = false;
 Actor* aimTarget = nullptr;
-float maxAng = 60.0f;
+float maxAng = 70.0f;
 void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	PlayerCharacter* player = *g_thePlayer;
 	if (!aimHelperEnabled || isRidingHorse(player))
 		return;
 	TargetData td;
-	td = FindClosestToAim(maxAng, aimHelperMinDist, aimHelperMaxDist);
+	td = FindClosestToAim(maxAng, aimHelperMaxDist);
 	aimTarget = td.target;
 	if (aimTarget == nullptr)
 		return;
-	AimHelperThread::RequestThread(fn<void, Actor*, float>(LookAtRef), aimTarget, 50);
+	AimHelperThread::RequestThread(fn<void, Actor*, float>(LookAtRef), aimTarget, 40);
+
+	//No need to move the player backward
+	float tpdist = aimHelperMinDist + td.size;
+	if (tpdist > td.dd) {
+		aimTarget = nullptr;
+		return;
+	}
 
 	NiPoint3 pos;
 	GetTargetPos(player, &pos);
@@ -364,9 +458,9 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	float dy = aimTarget->pos.y - pos.y;
 	float dz = aimTarget->pos.z - pos.z;
 	NormalizeVector(dx, dy, dz);
-	dx *= td.size;
-	dy *= td.size;
-	dz *= td.size;
+	dx *= tpdist;
+	dy *= tpdist;
+	dz *= tpdist;
 
 	//player->pos = pos;
 	//MoveRefrToPosition(player, &refHandle, player->parentCell, CALL_MEMBER_FN(player, GetWorldspace)() , &pos, &(player->rot));

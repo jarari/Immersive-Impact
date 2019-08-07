@@ -20,7 +20,6 @@ void AimHelperThread::StartThread() {
 void AimHelperThread::StopThread() {
 	if (!isRunning)
 		return;
-	_MESSAGE("Stopping thread");
 	isRunning = false;
 	_t.join();
 	_t.std::thread::~thread();
