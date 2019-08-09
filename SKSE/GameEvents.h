@@ -491,6 +491,7 @@ struct TESHitEvent {
 
 	void			*unk14[7];			// 14
 };
+DEFINE_EVENTSINK(TESHitEvent);
 
 struct TESInitScriptEvent {
 	TESObjectREFR	*reference;
