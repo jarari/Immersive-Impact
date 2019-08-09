@@ -171,8 +171,8 @@ event OnPageReset(string a_page)
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		AddHeaderOption("$BINGLE_PAGE_SETTINGS_SPEEDMUL")
 		sliderPreAttackSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_PREATTACK", valuePreAttackSpeed, "x {2}")
-		sliderSwingSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWING", valueSwingSpeed, "x {2}")
 		sliderSwingSpeed1HOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWING1H", valueSwingSpeed1H, "x {2}")
+		sliderSwingSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWING", valueSwingSpeed, "x {2}")
 		sliderSwingSpeedDaggerOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWINGDAGGER", valueSwingSpeedDagger, "x {2}")
 		sliderSwingSpeedFistOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWINGFIST", valueSwingSpeedFist, "x {2}")
 		sliderBaseSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_POSTATTACK", valueBaseSpeed, "x {2}")
@@ -273,15 +273,15 @@ event OnOptionSliderAccept(int option, float value)
 		SetSliderOptionValue(sliderPreAttackSpeedOID_S, valuePreAttackSpeed, "x {2}")
 		UpdateSaveConfig(0, 2, valuePreAttackSpeed)
 		
-	elseif(option == sliderSwingSpeedOID_S)
-		valueSwingSpeed = value
-		SetSliderOptionValue(sliderSwingSpeedOID_S, valueSwingSpeed, "x {2}")
-		UpdateSaveConfig(0, 3, valueSwingSpeed)
-		
 	elseif(option == sliderSwingSpeed1HOID_S)
 		valueSwingSpeed1H = value
 		SetSliderOptionValue(sliderSwingSpeed1HOID_S, valueSwingSpeed1H, "x {2}")
-		UpdateSaveConfig(0, 4, valueSwingSpeed1H)
+		UpdateSaveConfig(0, 3, valueSwingSpeed1H)
+		
+	elseif(option == sliderSwingSpeedOID_S)
+		valueSwingSpeed = value
+		SetSliderOptionValue(sliderSwingSpeedOID_S, valueSwingSpeed, "x {2}")
+		UpdateSaveConfig(0, 4, valueSwingSpeed)
 		
 	elseif(option == sliderSwingSpeedDaggerOID_S)
 		valueSwingSpeedDagger = value
