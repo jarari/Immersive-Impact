@@ -119,6 +119,7 @@
     <ClCompile Include="GameLoadWatcher.cpp" />
     <ClCompile Include="ConfigHandler.cpp" />
     <ClCompile Include="EquipWatcher.cpp" />
+    <ClCompile Include="HitFeedback.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MenuCloseWatcher.cpp" />
     <ClCompile Include="Papyrus.cpp" />
@@ -132,6 +133,7 @@
     <ClInclude Include="GameLoadWatcher.h" />
     <ClInclude Include="ConfigHandler.h" />
     <ClInclude Include="EquipWatcher.h" />
+    <ClInclude Include="HitFeedback.h" />
     <ClInclude Include="MenuCloseWatcher.h" />
     <ClInclude Include="Papyrus.h" />
     <ClInclude Include="PluginData.h" />
