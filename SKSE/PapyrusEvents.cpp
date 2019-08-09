@@ -359,8 +359,7 @@ void BingleEventInvoker::SyncConfig(UInt32 ctype, float v) {
 	);
 }
 
-void BingleEventInvoker::TranslateTo(float x, float y, float z, float armorWeight) {
-	float vel = 600.0f * (100.0f / (armorWeight + 200.0f) + 1.0f);
+void BingleEventInvoker::TranslateTo(float x, float y, float z, float vel) {
 	g_translateToRegs.ForEach(
 		EventQueueFunctor4<float, float, float, float>(BSFixedString("OnTranslateTo"), x, y, z, vel)
 	);

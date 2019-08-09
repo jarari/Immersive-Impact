@@ -386,15 +386,17 @@ void GetCameraPos(NiPoint3* pos)
 static void LookAt(float posX, float posY, float posZ, float wait)
 {
 	PlayerCharacter* player = *g_thePlayer;
-	NiPoint3 cameraPos;
+	//NiPoint3 cameraPos;
 	double x, y, z, xy;
 	double rotZ, rotX;
 
-	GetCameraPos(&cameraPos);
+	//GetCameraPos(&cameraPos);
 
-	x = posX - cameraPos.x;
-	y = posY - cameraPos.y;
-	z = posZ - cameraPos.z;
+	NiPoint3 playerPos = player->pos;
+
+	x = posX - playerPos.x;
+	y = posY - playerPos.y;
+	z = posZ - playerPos.z;
 
 	xy = sqrt(x * x + y * y);
 	rotZ = atan2(x, y);
@@ -404,6 +406,7 @@ static void LookAt(float posX, float posY, float posZ, float wait)
 		rotZ -= M_PI * 2;
 	else if (rotZ - player->rot.z < -M_PI)
 		rotZ += M_PI * 2;
+
 
 	SetPlayerAngle(rotZ, player->rot.x, wait);
 }
@@ -464,7 +467,9 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 
 	//player->pos = pos;
 	//MoveRefrToPosition(player, &refHandle, player->parentCell, CALL_MEMBER_FN(player, GetWorldspace)() , &pos, &(player->rot));
-	BingleEventInvoker::TranslateTo(aimTarget->pos.x - dx, aimTarget->pos.y - dy, player->pos.z, EquipWatcher::playerArmorWeight);
+	//x2 at armorWeight 0, x1.1 at armorWeight 100(Heaviest armor set is around 80)
+	float vel = 750.0f * (100.0f / (EquipWatcher::playerArmorWeight * 9.5f + 50.0f) + 1.0f);
+	BingleEventInvoker::TranslateTo(aimTarget->pos.x - dx, aimTarget->pos.y - dy, player->pos.z, vel);
 
 	aimTarget = nullptr;
 }
