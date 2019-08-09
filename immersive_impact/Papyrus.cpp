@@ -13,6 +13,7 @@ namespace BingleImmersiveImpact {
 	bool customizedL = false;
 	bool customizedR = false;
 	//Since BSFixedStrings can't be compared with char types, we declare them.
+	BSFixedString s_as("attackStop");
 	BSFixedString s_pre("preHitFrame");
 	BSFixedString s_sw("weaponSwing");
 	BSFixedString s_lsw("weaponLeftSwing");
@@ -60,8 +61,13 @@ namespace BingleImmersiveImpact {
 	void EvaluateEvent(StaticFunctionTag *base, BSFixedString event) {
 		//_MESSAGE("Func ran");
 
+		if (event == s_as) {
+			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_Offset]);
+			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_LeftOffset]);
+		}
+
 		//If the event is preHitFrame
-		if (event == s_pre) {
+		else if (event == s_pre) {
 			//Calculate Offset values to override any player.modav commands
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", 1);
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", 1);
@@ -82,21 +88,21 @@ namespace BingleImmersiveImpact {
 			}
 			//Tried OnActorAction, but it sucks. I figured this way is more reliable.
 			ActorModifier::RestrainMovement((Actor*)(*g_thePlayer), true);
-			ActorModifier::RestrainView((Actor*)(*g_thePlayer), false);			
+			ActorModifier::RestrainView((Actor*)(*g_thePlayer), false);	
 
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_Offset]);
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_LeftOffset]);
 
 
-			float minRange = max((*g_thePlayer)->race->data.handReach * 1.5f, 60.0f);
+			float minRange = max((*g_thePlayer)->race->data.handReach * 0.8f, 60.0f);
 			float maxRange = (*g_thePlayer)->race->data.handReach * 3.0f;
 			ActorModifier::LockAim(minRange, maxRange);
 		} 
 
 		else if (event == s_sw || event == s_lsw) {
+			ActorModifier::RestrainView((Actor*)(*g_thePlayer), true);
 			//If the event is weaponSwing
 			if (event == s_sw) {
-				ActorModifier::RestrainView((Actor*)(*g_thePlayer), true);
 				if (customizedR) {
 					ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_CustomR_Swing] + speedValues[ConfigType::Speed_Offset]);
 				}
@@ -108,7 +114,6 @@ namespace BingleImmersiveImpact {
 			}
 			//If the event is weaponLeftSwing
 			else if (event == s_lsw) {
-				ActorModifier::RestrainView((Actor*)(*g_thePlayer), true);
 				if (customizedL) {
 					ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_CustomL_Swing] + speedValues[ConfigType::Speed_LeftOffset]);
 				}
@@ -223,17 +228,17 @@ namespace BingleImmersiveImpact {
 	float GetDefault(ConfigType c) {
 		switch (c) {
 			case ConfigType::Speed_Pre:
-				return 0.8f;
+				return 0.5f;
 			case ConfigType::Speed_Swing1h:
-				return 1.4f;
+				return 1.5f;
 			case ConfigType::Speed_Swing2h:
-				return 1.75f;
+				return 1.8f;
 			case ConfigType::Speed_SwingDag:
-				return 1.0f;
+				return 1.1f;
 			case ConfigType::Speed_SwingFist:
-				return 1.25f;
+				return 1.7f;
 			case ConfigType::Speed_Post:
-				return 0.9f;
+				return 2.5f;
 			case ConfigType::RestrainMovement:
 				return 0;
 			case ConfigType::AimHelper:
