@@ -18,6 +18,7 @@ int sliderSwingSpeedFistOID_S
 int sliderBaseSpeedOID_S
 int sliderCustomLOID_S
 int sliderCustomROID_S
+int sliderChargeMulOID_S
 
 int toggleRestrainMovementOID_B
 int toggleAimHelperOID_B
@@ -32,6 +33,7 @@ float property valueSwingSpeedFist auto
 float property valueBaseSpeed auto
 float property valueCustomL auto
 float property valueCustomR auto
+float property valueChargeMul auto
 bool property valueRestrainMovement auto
 bool property valueAimHelper auto
 int property IFState auto
@@ -161,6 +163,8 @@ Function SyncConfig(int type, float v)
 		else
 			valueAimHelper = false
 		endif
+	elseif(type == 12)
+		valueChargeMul = v
 	endif
 EndFunction
 
@@ -178,6 +182,7 @@ event OnPageReset(string a_page)
 		sliderBaseSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_POSTATTACK", valueBaseSpeed, "x {2}")
 		toggleRestrainMovementOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_RESTRAINMOVEMENT", valueRestrainMovement)
 		toggleAimHelperOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_AIMHELPER", valueAimHelper)
+		sliderChargeMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_CHARGEMUL", valueChargeMul, "x {2}")
 		string stateText = "$BINGLE_IF_NOTINIT"
 		int opt = OPTION_FLAG_DISABLED
 		if(IFState == 1)
@@ -263,6 +268,10 @@ event OnOptionSliderOpen(int option)
 	elseif(option == sliderCustomROID_S)
 		SetSliderDialogStartValue(valueCustomR)
 		SetSliderDialogDefaultValue(1.0)
+		
+	elseif(option == sliderChargeMulOID_S)
+		SetSliderDialogStartValue(valueChargeMul)
+		SetSliderDialogDefaultValue(1.0)
 	
 	endif
 endEvent
@@ -307,5 +316,11 @@ event OnOptionSliderAccept(int option, float value)
 		valueCustomR = value
 		SetSliderOptionValue(sliderCustomROID_S, valueCustomR, "x {2}")
 		UpdateSaveConfig(Game.GetPlayer().GetEquippedWeapon(false).GetFormID(), 9, valueCustomR)
+		
+	elseif(option == sliderChargeMulOID_S)
+		valueChargeMul = value
+		SetSliderOptionValue(sliderChargeMulOID_S, valueChargeMul, "x {2}")
+		UpdateSaveConfig(0, 12, valueChargeMul)
+		
 	endif
 endEvent

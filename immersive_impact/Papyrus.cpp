@@ -10,6 +10,7 @@
 
 namespace BingleImmersiveImpact {
 	float speedValues[ConfigType::EndOfEnumMarker];
+	float chargeMul = 1.0f;
 	bool customizedL = false;
 	bool customizedR = false;
 	//Since BSFixedStrings can't be compared with char types, we declare them.
@@ -95,7 +96,7 @@ namespace BingleImmersiveImpact {
 
 
 			float minRange = max((*g_thePlayer)->race->data.handReach * 0.8f, 60.0f);
-			float maxRange = (*g_thePlayer)->race->data.handReach * 3.0f;
+			float maxRange = (*g_thePlayer)->race->data.handReach * 3.0f * chargeMul;
 			ActorModifier::LockAim(minRange, maxRange);
 		} 
 
@@ -202,6 +203,9 @@ namespace BingleImmersiveImpact {
 		else if (configtype == ConfigType::AimHelper) {
 			ActorModifier::EnableAimHelper(v);
 		}
+		else if (configtype == ConfigType::ChargeMul) {
+			chargeMul = v;
+		}
 		ConfigHandler::SetConfig(formId, (ConfigType)configtype, v);
 	}
 
@@ -228,7 +232,7 @@ namespace BingleImmersiveImpact {
 	float GetDefault(ConfigType c) {
 		switch (c) {
 			case ConfigType::Speed_Pre:
-				return 0.5f;
+				return 0.6f;
 			case ConfigType::Speed_Swing1h:
 				return 1.5f;
 			case ConfigType::Speed_Swing2h:
@@ -243,6 +247,8 @@ namespace BingleImmersiveImpact {
 				return 0;
 			case ConfigType::AimHelper:
 				return 0;
+			case ConfigType::ChargeMul:
+				return 1.0f;
 		}
 	}
 
