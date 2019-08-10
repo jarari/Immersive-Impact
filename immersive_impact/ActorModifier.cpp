@@ -482,6 +482,8 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	//To prevent player from being stuck in the terrain
 	if (dz > 100)
 		return;
+	//We don't need dz value anymore. It shouldn't be affecting x, y values.
+	dz = 0;
 	NormalizeVector(dx, dy, dz);
 	dx *= tpdist;
 	dy *= tpdist;

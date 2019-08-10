@@ -77,8 +77,6 @@ EndEvent
 
 Event OnTranslateTo(float x, float y, float z, float vel)
 	translateTarget.TranslateTo(x, y, z, translateTarget.GetAngleX(), translateTarget.GetAngleY(), translateTarget.GetAngleZ(), vel, 0)
-	Utility.Wait(0.4)
-	translateTarget.StopTranslation()
 EndEvent
 
 Event OnAnimationEvent(ObjectReference akSource, string asEventName)
