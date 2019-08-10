@@ -642,6 +642,7 @@ public:
 	static void SendNotification(BSFixedString msg);
 	static void ShowMessageBox(BSFixedString msg);
 	static void SyncConfig(UInt32 ctype, float v);
+	static void TranslateToTarget(Actor *a);
 	static void TranslateTo(float x, float y, float z, float vel);
 };
 

@@ -11,6 +11,7 @@
 #include "WeaponSwingWatcher.h"
 #include "RaceSwitchWatcher.h"
 #include "ConfigHandler.h"
+#include <immersive_impact\HitFeedback.h>
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \
@@ -88,6 +89,7 @@ extern "C"	{
 			EquipWatcher::InitHook();
 			WeaponSwingWatcher::InitHook();
 			RaceSwitchWatcher::InitHook();
+			HitFeedback::InitHook();
 			new ConfigHandler();
 			_MESSAGE((PLUGIN_NAME + ((string)" register success")).c_str());
 		}

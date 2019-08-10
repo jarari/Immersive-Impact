@@ -22,6 +22,7 @@ int sliderChargeMulOID_S
 
 int toggleRestrainMovementOID_B
 int toggleAimHelperOID_B
+int toggleHitFeedbackOID_B
 
 ; Public
 BingleImmersiveFeedback property pBingleImmersiveFeedback auto
@@ -36,6 +37,7 @@ float property valueCustomR auto
 float property valueChargeMul auto
 bool property valueRestrainMovement auto
 bool property valueAimHelper auto
+bool property valueHitFeedback auto
 int property IFState auto
 
 ; Private
@@ -165,6 +167,12 @@ Function SyncConfig(int type, float v)
 		endif
 	elseif(type == 12)
 		valueChargeMul = v
+	elseif(type == 13)
+		if(v == 1)
+			valueHitFeedback = true
+		else
+			valueHitFeedback = false
+		endif
 	endif
 EndFunction
 
@@ -180,9 +188,12 @@ event OnPageReset(string a_page)
 		sliderSwingSpeedDaggerOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWINGDAGGER", valueSwingSpeedDagger, "x {2}")
 		sliderSwingSpeedFistOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWINGFIST", valueSwingSpeedFist, "x {2}")
 		sliderBaseSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_POSTATTACK", valueBaseSpeed, "x {2}")
+		SetCursorPosition(1)
+		AddHeaderOption("$BINGLE_PAGE_SETTINGS_FEATURES")
 		toggleRestrainMovementOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_RESTRAINMOVEMENT", valueRestrainMovement)
 		toggleAimHelperOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_AIMHELPER", valueAimHelper)
 		sliderChargeMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_CHARGEMUL", valueChargeMul, "x {2}")
+		;toggleHitFeedbackOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_HITFEEDBACK", valueHitFeedback)
 		string stateText = "$BINGLE_IF_NOTINIT"
 		int opt = OPTION_FLAG_DISABLED
 		if(IFState == 1)
@@ -193,7 +204,6 @@ event OnPageReset(string a_page)
 			opt = OPTION_FLAG_NONE
 		endif
 		AddTextOptionST("StateText", "", stateText, opt)
-		SetCursorPosition(1)
 	elseif(a_page == "$BINGLE_PAGE_CUSTOMWEAP")
 		Actor p = Game.GetPlayer()
 		int flags = OPTION_FLAG_NONE
@@ -230,6 +240,22 @@ event OnOptionSelect(int option)
 			UpdateSaveConfig(0, 11, 1)
 		else
 			UpdateSaveConfig(0, 11, 0)
+		endif
+	elseif (option == toggleAimHelperOID_B)
+		valueAimHelper = !valueAimHelper
+		SetToggleOptionValue(toggleAimHelperOID_B, valueAimHelper)
+		if(valueAimHelper)
+			UpdateSaveConfig(0, 11, 1)
+		else
+			UpdateSaveConfig(0, 11, 0)
+		endif
+	elseif (option == toggleHitFeedbackOID_B)
+		valueHitFeedback = !valueHitFeedback
+		SetToggleOptionValue(toggleHitFeedbackOID_B, valueHitFeedback)
+		if(valueHitFeedback)
+			UpdateSaveConfig(0, 13, 1)
+		else
+			UpdateSaveConfig(0, 13, 0)
 		endif
 	endIf
 endEvent

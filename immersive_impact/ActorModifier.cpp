@@ -41,7 +41,6 @@ void ActorModifier::RestrainMovement(Actor * a, bool restrain) {
 	if (restrain && !isRestrained && !isRidingHorse(*g_thePlayer)) {
 		isRestrained = true;
 		PlayerControls::GetSingleton()->inputHandlers[0]->enabled = false;
-		CALL_MEMBER_FN(&(a->animGraphHolder), SetAnimationVariableFloat)("Speed", 0);
 		//BingleEventInvoker::ShowMessageBox(BSFixedString("restrain actor"));
 	}
 	else if(!restrain && isRestrained){
@@ -90,15 +89,14 @@ struct UnkCellInfo
 };
 static UnkCellInfo** playerCellInfo = (UnkCellInfo * *)ADDR_UnkCellInfo;
 
-
-void NormalizeVector(float &x, float &y, float &z) {
+void NormalizeVector(float& x, float& y, float& z) {
 	float scale = sqrt(x * x + y * y + z * z);
 	x /= scale;
 	y /= scale;
 	z /= scale;
 }
 
-void NormalizeVector(NiPoint3 &vec) {
+void NormalizeVector(NiPoint3& vec) {
 	float scale = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 	vec.x /= scale;
 	vec.y /= scale;
@@ -211,9 +209,9 @@ TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 			//GetTargetPos doesn't work on the player, so we get the target's position and match z value to feet.
 			NiPoint3 playerPos = player->pos;
 			Actor* target = (Actor*)ref;
-			NiPoint3 targetPos;
-			GetTargetPos(target, &targetPos);
-			targetPos.z = target->pos.z;
+			NiPoint3 targetPos = target->pos;
+			//GetTargetPos(target, &targetPos);
+			//targetPos.z = target->pos.z;
 			float dx = targetPos.x - playerPos.x;
 			float dy = targetPos.y - playerPos.y;
 			float dz = targetPos.z - playerPos.z;
@@ -317,13 +315,14 @@ TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 	return TargetData(a, size, dist);
 }
 
-void SetPlayerAngle(float rotZ, float rotX, float wait)
+void SetPlayerAngle(float rotZ, float rotX)
 {
 	PlayerCharacter* player = *g_thePlayer;
 	/*TESCameraController* controller = TESCameraController::GetSingleton();
 	
 	controller->Rotate(player->rot.z, player->rot.x, rotZ, rotX, wait, 0);*/
 	//Why rotate cam when view's restrained? Fuck it.
+	_MESSAGE("rotz %f rotx %f", rotZ, rotX);
 	player->rot.z = rotZ;
 	player->rot.x = rotX;
 }
@@ -383,7 +382,7 @@ void GetCameraPos(NiPoint3* pos)
 }
 
 // カメラを任意の座標に向ける
-static void LookAt(float posX, float posY, float posZ, float wait)
+static void LookAt(float posX, float posY, float posZ)
 {
 	PlayerCharacter* player = *g_thePlayer;
 	//NiPoint3 cameraPos;
@@ -408,11 +407,11 @@ static void LookAt(float posX, float posY, float posZ, float wait)
 		rotZ += M_PI * 2;
 
 
-	SetPlayerAngle(rotZ, player->rot.x, wait);
+	SetPlayerAngle(rotZ, player->rot.x);
 }
 
 // プレイヤーを対象に向ける
-static void LookAtRef(TESObjectREFR* akRef, float wait)
+static void LookAtRef(TESObjectREFR* akRef, float size)
 {
 	if (akRef == NULL)
 		return;
@@ -420,18 +419,25 @@ static void LookAtRef(TESObjectREFR* akRef, float wait)
 	if (akRef->GetNiNode() == NULL)
 		return;
 
+	//If the target's size is too large, use its position.
 	NiPoint3 targetPos;
-	if (!GetTargetPos(akRef, &targetPos))
-		return;
+	if (size < 75) {
+		if (!GetTargetPos(akRef, &targetPos))
+			return;
+	}
+	else {
+		akRef->GetMarkerPosition(&targetPos);
+		targetPos.x = akRef->pos.x;
+		targetPos.y = akRef->pos.y;
+	}
 
-	LookAt(targetPos.x, targetPos.y, targetPos.z, wait);
+	LookAt(targetPos.x, targetPos.y, targetPos.z);
 }
 
 bool aimHelperEnabled = false;
 void ActorModifier::EnableAimHelper(bool b) {
 	aimHelperEnabled = b;
 }
-
 
 bool aimLocked = false;
 Actor* aimTarget = nullptr;
@@ -445,10 +451,11 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	aimTarget = td.target;
 	if (aimTarget == nullptr)
 		return;
-	AimHelperThread::RequestThread(fn<void, Actor*, float>(LookAtRef), aimTarget, 40);
+	AimHelperThread::RequestThread(fn<void, Actor*, float>(LookAtRef), aimTarget, td.size);
 
 	//No need to move the player backward
-	float tpdist = aimHelperMinDist + td.size;
+	//The size is multiplied by 2 to prevent the player from teleporting into the target.
+	float tpdist = aimHelperMinDist + td.size * 2;
 	if (tpdist > td.dd) {
 		aimTarget = nullptr;
 		return;
@@ -469,6 +476,7 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	//MoveRefrToPosition(player, &refHandle, player->parentCell, CALL_MEMBER_FN(player, GetWorldspace)() , &pos, &(player->rot));
 	//x2 at armorWeight 0, x1.1 at armorWeight 100(Heaviest armor set is around 80)
 	float vel = 750.0f * (100.0f / (EquipWatcher::playerArmorWeight * 9.5f + 50.0f) + 1.0f);
+	BingleEventInvoker::TranslateToTarget(player);
 	BingleEventInvoker::TranslateTo(aimTarget->pos.x - dx, aimTarget->pos.y - dy, player->pos.z, vel);
 
 	aimTarget = nullptr;

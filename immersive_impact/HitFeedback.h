@@ -7,6 +7,7 @@ class HitFeedback : public BSTEventSink<EVENT> {
 protected:
 	static HitFeedback* instance;
 	static std::string className;
+	static bool feedbackEnabled;
 public:
 	HitFeedback() {
 		if (instance)
@@ -21,6 +22,8 @@ public:
 	virtual ~HitFeedback();
 
 	static void InitHook();
+
+	static void EnableFeedback(bool b);
 
 	virtual EventResult ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) override;
 };

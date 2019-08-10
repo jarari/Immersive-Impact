@@ -4,6 +4,7 @@
 #include "SKSE/GameObjects.h"
 #include "SKSE/GameReferences.h"
 #include "SKSE/PapyrusEvents.h"
+#include "SKSE/GameData.h"
 #include "ActorModifier.h"
 #include "ConfigHandler.h"
 #include "EquipWatcher.h"
@@ -79,11 +80,10 @@ namespace BingleImmersiveImpact {
 			tList<ActiveEffect>::Iterator it = list_ae->Begin();
 			while (!it.End()) {
 				ActiveEffect* ae = it.Get();
-				//If the player has Elemental Fury applied
-				if (ae->item->formID == 181653) {
+				//Instead of looking for specific for ids, look for what actorvalue does this ActiveEffect change.
+				if (ae->actorValue == LookupActorValueByName("WeaponSpeedMult")) {
 					speedValues[ConfigType::Speed_Offset] += ae->magnitude - 1;
 					speedValues[ConfigType::Speed_LeftOffset] += ae->magnitude - 1;
-					break;
 				}
 				++it;
 			}
@@ -95,7 +95,7 @@ namespace BingleImmersiveImpact {
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_LeftOffset]);
 
 
-			float minRange = max((*g_thePlayer)->race->data.handReach * 0.8f, 60.0f);
+			float minRange = max((*g_thePlayer)->race->data.handReach, 60.0f);
 			float maxRange = (*g_thePlayer)->race->data.handReach * 3.0f * chargeMul;
 			ActorModifier::LockAim(minRange, maxRange);
 		} 
@@ -107,8 +107,8 @@ namespace BingleImmersiveImpact {
 				if (customizedR) {
 					ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_CustomR_Swing] + speedValues[ConfigType::Speed_Offset]);
 				}
-				else if (papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 1)) {
-					TESObjectWEAP* wep = ((TESObjectWEAP*)(papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 1)));
+				else if ((Actor*)(*g_thePlayer)->GetEquippedObject(false)) {
+					TESObjectWEAP* wep = ((TESObjectWEAP*)(Actor*)(*g_thePlayer)->GetEquippedObject(false));
 					int weptype = wep->type();
 					ModifyAttackSpeedByTypes(wep, weptype, true);
 				}
@@ -118,8 +118,8 @@ namespace BingleImmersiveImpact {
 				if (customizedL) {
 					ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_CustomL_Swing] + speedValues[ConfigType::Speed_LeftOffset]);
 				}
-				else if (papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 0)) {
-					TESObjectWEAP* wep = ((TESObjectWEAP*)(papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 0)));
+				else if ((Actor*)(*g_thePlayer)->GetEquippedObject(true)) {
+					TESObjectWEAP* wep = ((TESObjectWEAP*)(Actor*)(*g_thePlayer)->GetEquippedObject(true));
 					int weptype = wep->type();
 					ModifyAttackSpeedByTypes(wep, weptype, false);
 				}
@@ -182,7 +182,7 @@ namespace BingleImmersiveImpact {
 			speedValues[configtype] = v;
 			if (configtype == ConfigType::Speed_CustomL_Swing) {
 				SetCustomized(0, true);
-				if (papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 1) == papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 0)) {
+				if ((Actor*)(*g_thePlayer)->GetEquippedObject(false) == (Actor*)(*g_thePlayer)->GetEquippedObject(true)) {
 					speedValues[ConfigType::Speed_CustomR_Swing] = v;
 					SetCustomized(1, true);
 					BingleEventInvoker::SyncConfig(ConfigType::Speed_CustomR_Swing, v);
@@ -190,7 +190,7 @@ namespace BingleImmersiveImpact {
 			}
 			if (configtype == ConfigType::Speed_CustomR_Swing) {
 				SetCustomized(1, true);
-				if (papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 1) == papyrusActor::GetEquippedObject((Actor*)(*g_thePlayer), 0)) {
+				if ((Actor*)(*g_thePlayer)->GetEquippedObject(false) == (Actor*)(*g_thePlayer)->GetEquippedObject(true)) {
 					speedValues[ConfigType::Speed_CustomL_Swing] = v;
 					SetCustomized(0, true);
 					BingleEventInvoker::SyncConfig(ConfigType::Speed_CustomL_Swing, v);
@@ -242,13 +242,15 @@ namespace BingleImmersiveImpact {
 			case ConfigType::Speed_SwingFist:
 				return 1.7f;
 			case ConfigType::Speed_Post:
-				return 2.5f;
+				return 2.0f;
 			case ConfigType::RestrainMovement:
 				return 0;
 			case ConfigType::AimHelper:
 				return 0;
 			case ConfigType::ChargeMul:
 				return 1.0f;
+			case ConfigType::HitFeedback:
+				return 0;
 		}
 	}
 

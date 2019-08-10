@@ -359,6 +359,12 @@ void BingleEventInvoker::SyncConfig(UInt32 ctype, float v) {
 	);
 }
 
+void BingleEventInvoker::TranslateToTarget(Actor* a) {
+	g_translateToRegs.ForEach(
+		EventQueueFunctor1<TESObjectREFR*>(BSFixedString("OnTranslateToTarget"), (TESObjectREFR*)a)
+	);
+}
+
 void BingleEventInvoker::TranslateTo(float x, float y, float z, float vel) {
 	g_translateToRegs.ForEach(
 		EventQueueFunctor4<float, float, float, float>(BSFixedString("OnTranslateTo"), x, y, z, vel)

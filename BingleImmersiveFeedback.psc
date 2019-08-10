@@ -12,6 +12,7 @@ Function RegisterForConfigRequest() native
 Function RegisterForTranslateToRequest() native
 
 Actor player
+Actor translateTarget
 Function InitializeStuff()
 	pMCMScript.UpdateIFState(1)
 	player = GetActorReference()
@@ -70,8 +71,14 @@ Event OnMessageBoxRequest(string content)
 	Debug.MessageBox(content)
 EndEvent
 
+Event OnTranslateToTarget(ObjectReference _ac)
+	translateTarget = (_ac as Actor)
+EndEvent
+
 Event OnTranslateTo(float x, float y, float z, float vel)
-	player.TranslateTo(x, y, z, player.GetAngleX(), player.GetAngleY(), player.GetAngleZ(), vel, 0)
+	translateTarget.TranslateTo(x, y, z, translateTarget.GetAngleX(), translateTarget.GetAngleY(), translateTarget.GetAngleZ(), vel, 0)
+	Utility.Wait(0.4)
+	translateTarget.StopTranslation()
 EndEvent
 
 Event OnAnimationEvent(ObjectReference akSource, string asEventName)

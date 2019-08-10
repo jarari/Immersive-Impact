@@ -35,7 +35,7 @@ EventResult MenuCloseWatcher::ReceiveEvent(MenuOpenCloseEvent * evn, EventDispat
 	if (actionRequested && !evn->opening) {
 		actionRequested = false;
 		_MESSAGE("Action requested, and the user is closing the menu...");
-		if (!papyrusActor::GetEquippedObject(actionTarget, 0) && !papyrusActor::GetEquippedObject(actionTarget, 1)
+		if (!actionTarget->GetEquippedObject(false) && !actionTarget->GetEquippedObject(true)
 			&& !actionTarget->equippingMagicItems[0] && !actionTarget->equippingMagicItems[1]) {
 			_MESSAGE("...and he's unarmed. Force equipping the hand weapon.");
 			BingleEventInvoker::EquipFist(actionTarget);

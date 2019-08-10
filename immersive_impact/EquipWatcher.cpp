@@ -57,14 +57,14 @@ void EquipWatcher::ScanArmorWeight() {
 
 EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESEquipEvent>* src) {
 	if (evn->unk_00 == (UInt32)(*g_thePlayer)) {
-		if (!papyrusActor::GetEquippedObject((Actor*)evn->unk_00, 0) && !papyrusActor::GetEquippedObject((Actor*)evn->unk_00, 1)
+		if (!((Actor*)(evn->unk_00))->GetEquippedObject(true) && !((Actor*)(evn->unk_00))->GetEquippedObject(false)
 			&& !((Actor*)evn->unk_00)->equippingMagicItems[0] && !((Actor*)evn->unk_00)->equippingMagicItems[1])
 			MenuCloseWatcher::RequestAction((Actor*)(evn->unk_00));
 		if (!isInitialized && (*g_thePlayer)->GetNiNode()) {
 			isInitialized = true;
 			ConfigHandler::LoadConfig(0);
-			TESForm *rweap = papyrusActor::GetEquippedObject((Actor*)evn->unk_00, 1);
-			TESForm *lweap = papyrusActor::GetEquippedObject((Actor*)evn->unk_00, 0);
+			TESForm *rweap = ((Actor*)(evn->unk_00))->GetEquippedObject(false);
+			TESForm *lweap = ((Actor*)(evn->unk_00))->GetEquippedObject(true);
 			if (rweap) {
 				ConfigHandler::LoadConfig(rweap->formID, ((TESObjectWEAP*)rweap)->type(), 1);
 			}
@@ -77,15 +77,15 @@ EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESE
 			TESForm *equipment = LookupFormByID(evn->unk_01);
 			if (equipment && equipment->GetFormType() == FormType::kFormType_Weapon) {
 				if (evn->unk_03 & 0x10000) {
-					if (papyrusActor::GetEquippedObject((Actor*)evn->unk_00, 1) == equipment)
+					if (((Actor*)(evn->unk_00))->GetEquippedObject(false) == equipment)
 						ConfigHandler::LoadConfig(equipment->formID, ((TESObjectWEAP*)equipment)->type(), 1);
-					if (papyrusActor::GetEquippedObject((Actor*)evn->unk_00, 0) == equipment)
+					if (((Actor*)(evn->unk_00))->GetEquippedObject(true) == equipment)
 						ConfigHandler::LoadConfig(equipment->formID, ((TESObjectWEAP*)equipment)->type(), 0);
 				} 
 				else {
-					if (!papyrusActor::GetEquippedObject((Actor*)evn->unk_00, 1))
+					if (!((Actor*)(evn->unk_00))->GetEquippedObject(false))
 						BingleImmersiveImpact::SetCustomized(1, false);
-					if (!papyrusActor::GetEquippedObject((Actor*)evn->unk_00, 0))
+					if (!((Actor*)(evn->unk_00))->GetEquippedObject(true))
 						BingleImmersiveImpact::SetCustomized(0, false);
 				}
 			}

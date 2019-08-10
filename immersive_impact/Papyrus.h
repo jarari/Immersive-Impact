@@ -15,6 +15,7 @@ namespace BingleImmersiveImpact {
 		RestrainMovement,
 		AimHelper,
 		ChargeMul,
+		HitFeedback,
 		EndOfEnumMarker
 	};
 	static const char* ConfigTypeNames[ConfigType::EndOfEnumMarker] = {
@@ -30,7 +31,8 @@ namespace BingleImmersiveImpact {
 		"Custom_Swing",
 		"RestrainMovement",
 		"AimHelper",
-		"ChargeMul"
+		"ChargeMul",
+		"HitFeedback"
 	};
 	float speedValues[];
 	void UpdateFromConfig(ConfigType, float);

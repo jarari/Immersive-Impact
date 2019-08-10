@@ -3,6 +3,10 @@
 
 #define ADDR_UnkCellInfo						0x012E32E8
 class Actor;
+class NiPoint3;
+void NormalizeVector(float& x, float& y, float& z);
+void NormalizeVector(NiPoint3& vec);
+
 class TargetData {
 public:
 	TargetData() {

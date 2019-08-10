@@ -3,6 +3,7 @@
 #include "ActorModifier.h"
 #include "SKSE/PapyrusEvents.h"
 #include <sys/stat.h>
+#include <immersive_impact\HitFeedback.h>
 
 #define CTYPE(name) BingleImmersiveImpact::ConfigType::name
 #define CNAME(ctype) BingleImmersiveImpact::ConfigTypeNames[ctype]
@@ -41,6 +42,8 @@ ConfigHandler::ConfigHandler() {
 		ini.SetValue("General", "AimHelper", f2c);
 		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(ChargeMul)));
 		ini.SetValue("General", "ChargeMul", f2c);
+		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(HitFeedback)));
+		ini.SetValue("General", "HitFeedback", f2c);
 		ini.SaveFile(filepath, false);
 	}
 	SI_Error error = ini.LoadFile(filepath);
@@ -77,9 +80,12 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 			ActorModifier::EnableRestraint(true);
 		if (std::stof(ini.GetValue("General", CNAME(CTYPE(AimHelper)), "0", NULL)) == 1)
 			ActorModifier::EnableAimHelper(true);
+		if (std::stof(ini.GetValue("General", CNAME(CTYPE(HitFeedback)), "0", NULL)) == 1)
+			HitFeedback::EnableFeedback(true);
 		BingleEventInvoker::SyncConfig(CTYPE(RestrainMovement), std::stof(ini.GetValue("General", CNAME(CTYPE(RestrainMovement)), "0", NULL)));
 		BingleEventInvoker::SyncConfig(CTYPE(AimHelper), std::stof(ini.GetValue("General", CNAME(CTYPE(AimHelper)), "0", NULL)));
 		BingleEventInvoker::SyncConfig(CTYPE(ChargeMul), std::stof(ini.GetValue("General", CNAME(CTYPE(ChargeMul)), "1.0", NULL)));
+		BingleEventInvoker::SyncConfig(CTYPE(HitFeedback), std::stof(ini.GetValue("General", CNAME(CTYPE(HitFeedback)), "0", NULL)));
 	}
 	else{
 		_MESSAGE("Config existence check for %s", formIdstr);
