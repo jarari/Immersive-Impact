@@ -188,7 +188,7 @@ void SetMatrix33(float a, float b, float c, float d, float e, float f, float g, 
 
 TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 	tArray<UInt32>* actorHandles = &(*playerCellInfo)->actorHandles;
-	if (actorHandles->count == 0)
+	if (actorHandles == nullptr || actorHandles->count == 0)
 		return TargetData();
 
 	UInt32 handle;
@@ -315,16 +315,28 @@ TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 	return TargetData(a, size, dist);
 }
 
-void SetPlayerAngle(float rotZ, float rotX)
+float rotateAmount = 1.0f * M_PI / 180.0f;
+void RotatePlayerAngleByAmount(float rotZ, float rotX)
 {
 	PlayerCharacter* player = *g_thePlayer;
 	/*TESCameraController* controller = TESCameraController::GetSingleton();
 	
 	controller->Rotate(player->rot.z, player->rot.x, rotZ, rotX, wait, 0);*/
 	//Why rotate cam when view's restrained? Fuck it.
-	_MESSAGE("rotz %f rotx %f", rotZ, rotX);
-	player->rot.z = rotZ;
-	player->rot.x = rotX;
+	float drx = rotX - player->rot.x;
+	float drz = rotZ - player->rot.z;
+	if (drx < -M_PI)
+		drx += M_PI * 2.0f;
+	else if (drx > M_PI)
+		drx -= M_PI * 2.0f;
+	drx = max(min(drx, rotateAmount), -rotateAmount);
+	if (drz < -M_PI)
+		drz += M_PI * 2.0f;
+	else if (drz > M_PI)
+		drz -= M_PI * 2.0f;
+	drz = max(min(drz, rotateAmount), -rotateAmount);
+	player->rot.x += drx;
+	player->rot.z += drz;
 }
 
 // カメラが一人称視点かどうか調べる
@@ -407,7 +419,7 @@ static void LookAt(float posX, float posY, float posZ)
 		rotZ += M_PI * 2;
 
 
-	SetPlayerAngle(rotZ, player->rot.x);
+	RotatePlayerAngleByAmount(rotZ, player->rot.x);
 }
 
 // プレイヤーを対象に向ける
