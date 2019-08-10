@@ -94,9 +94,9 @@ namespace BingleImmersiveImpact {
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_Offset]);
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_LeftOffset]);
 
-
+			float wepReach = EquipWatcher::isTwoHanded ? ((TESObjectWEAP*)(Actor*)(*g_thePlayer)->GetEquippedObject(false))->reach() : 1.0f;
 			float minRange = max((*g_thePlayer)->race->data.handReach, 60.0f);
-			float maxRange = (*g_thePlayer)->race->data.handReach * 3.0f * chargeMul;
+			float maxRange = (*g_thePlayer)->race->data.handReach * 3.0f * chargeMul * wepReach;
 			ActorModifier::LockAim(minRange, maxRange);
 		} 
 

@@ -12,6 +12,7 @@ public:
 		_MESSAGE("Equip hook instance created.");
 	}
 	static bool isInitialized;
+	static bool isTwoHanded;
 
 	static EquipWatcher *GetInstance() {
 		return instance;

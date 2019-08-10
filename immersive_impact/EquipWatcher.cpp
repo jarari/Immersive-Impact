@@ -11,6 +11,7 @@
 
 EquipWatcher *EquipWatcher::instance = nullptr;
 bool EquipWatcher::isInitialized = false;
+bool EquipWatcher::isTwoHanded = false;
 float EquipWatcher::playerArmorWeight = 0;
 
 EquipWatcher::~EquipWatcher() {
@@ -26,6 +27,7 @@ void EquipWatcher::InitHook() {
 
 void EquipWatcher::ResetHook() {
 	isInitialized = false;
+	isTwoHanded = false;
 }
 
 void EquipWatcher::ScanArmorWeight() {
@@ -68,7 +70,6 @@ EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESE
 			if (rweap) {
 				ConfigHandler::LoadConfig(rweap->formID, ((TESObjectWEAP*)rweap)->type(), 1);
 			}
-				
 			if (lweap) {
 				ConfigHandler::LoadConfig(lweap->formID, ((TESObjectWEAP*)lweap)->type(), 0);
 			}
@@ -77,12 +78,16 @@ EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESE
 			TESForm *equipment = LookupFormByID(evn->unk_01);
 			if (equipment && equipment->GetFormType() == FormType::kFormType_Weapon) {
 				if (evn->unk_03 & 0x10000) {
+					if (((Actor*)(evn->unk_00))->GetEquippedObject(false) == ((Actor*)(evn->unk_00))->GetEquippedObject(false))
+						isTwoHanded = true;
 					if (((Actor*)(evn->unk_00))->GetEquippedObject(false) == equipment)
 						ConfigHandler::LoadConfig(equipment->formID, ((TESObjectWEAP*)equipment)->type(), 1);
 					if (((Actor*)(evn->unk_00))->GetEquippedObject(true) == equipment)
 						ConfigHandler::LoadConfig(equipment->formID, ((TESObjectWEAP*)equipment)->type(), 0);
 				} 
 				else {
+					if (isTwoHanded)
+						isTwoHanded = false;
 					if (!((Actor*)(evn->unk_00))->GetEquippedObject(false))
 						BingleImmersiveImpact::SetCustomized(1, false);
 					if (!((Actor*)(evn->unk_00))->GetEquippedObject(true))
