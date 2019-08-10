@@ -478,7 +478,7 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	UInt32 refHandle = player->CreateRefHandle();
 	float dx = aimTarget->pos.x - pos.x;
 	float dy = aimTarget->pos.y - pos.y;
-	float dz = aimTarget->pos.z - pos.z;
+	float dz = aimTarget->pos.z - player->pos.z;
 	//To prevent player from being stuck in the terrain
 	if (dz > 100)
 		return;
