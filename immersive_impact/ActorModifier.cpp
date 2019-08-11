@@ -475,12 +475,10 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 		return;
 	}
 
-	NiPoint3 pos;
-	GetTargetPos(player, &pos);
-	UInt32 refHandle = player->CreateRefHandle();
+	NiPoint3 pos = player->pos;
 	float dx = aimTarget->pos.x - pos.x;
 	float dy = aimTarget->pos.y - pos.y;
-	float dz = aimTarget->pos.z - player->pos.z;
+	float dz = aimTarget->pos.z - pos.z;
 	//To prevent player from being stuck in the terrain
 	if (dz > 100)
 		return;
@@ -489,7 +487,6 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	NormalizeVector(dx, dy, dz);
 	dx *= tpdist;
 	dy *= tpdist;
-	dz *= tpdist;
 
 	//player->pos = pos;
 	//MoveRefrToPosition(player, &refHandle, player->parentCell, CALL_MEMBER_FN(player, GetWorldspace)() , &pos, &(player->rot));
