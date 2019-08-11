@@ -242,7 +242,7 @@ namespace BingleImmersiveImpact {
 			case ConfigType::Speed_SwingFist:
 				return 1.7f;
 			case ConfigType::Speed_Post:
-				return 2.0f;
+				return 1.6f;
 			case ConfigType::RestrainMovement:
 				return 0;
 			case ConfigType::AimHelper:
