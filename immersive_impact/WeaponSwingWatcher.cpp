@@ -18,6 +18,8 @@ enum {
 
 template<class T, UInt32 Type>
 UInt8 CustomHandlerFunctor<Actor, UInt32>::ProcessAction(Actor * actor, UInt32 unk04) {
+	if (actor != (Actor*)*g_thePlayer)
+		return CALL_MEMBER_FN(static_cast<T*>(this), Process_Origin)(actor, unk04);
 	ActorModifier::RestrainMovement(actor, false);
 	//ActorModifier::RestrainView(actor, false);
 	ActorModifier::UnlockAim();
