@@ -257,7 +257,7 @@ TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 				if (target->GetNiNode() != nullptr && target->GetNiNode()->m_extraDataLen > 0) {
 					for (int i = 0; i < target->GetNiNode()->m_extraDataLen; i++) {
 						NiExtraData* exData = target->GetNiNode()->m_extraData[i];
-						if (exData->m_pcName && strlen(exData->m_pcName) > 0 && strcmp(exData->m_pcName, "BBX") == 0) {
+						if (exData != nullptr && exData->m_pcName && strlen(exData->m_pcName) > 0 && strcmp(exData->m_pcName, "BBX") == 0) {
 							bx = (UInt32)round(*((float*)((char*)exData + 0x18)));
 							bx2 = 0;
 							by = (UInt32)round(*((float*)((char*)exData + 0x1C)));
@@ -437,7 +437,7 @@ static void LookAtRef(TESObjectREFR* akRef, float size)
 
 	//If the target's size is too large, use its position.
 	NiPoint3 targetPos;
-	if (size < 75) {
+	if (size < 50) {
 		if (!GetTargetPos(akRef, &targetPos))
 			return;
 	}
