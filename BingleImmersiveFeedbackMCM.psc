@@ -284,6 +284,8 @@ event OnOptionSliderOpen(int option)
 		SetSliderDialogDefaultValue(defaultSwingSpeedFist)
 		
 	elseif(option == sliderBaseSpeedOID_S)
+		SetSliderDialogInterval(0.05)
+		SetSliderDialogRange(0.1, 1.6)
 		SetSliderDialogStartValue(valueBaseSpeed)
 		SetSliderDialogDefaultValue(defaultSwingSpeedFist)
 		
@@ -296,6 +298,8 @@ event OnOptionSliderOpen(int option)
 		SetSliderDialogDefaultValue(1.0)
 		
 	elseif(option == sliderChargeMulOID_S)
+		SetSliderDialogInterval(0.01)
+		SetSliderDialogRange(0.5, 3)
 		SetSliderDialogStartValue(valueChargeMul)
 		SetSliderDialogDefaultValue(1.0)
 	
