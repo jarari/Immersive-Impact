@@ -370,3 +370,9 @@ void BingleEventInvoker::TranslateTo(float x, float y, float z, float vel) {
 		EventQueueFunctor4<float, float, float, float>(BSFixedString("OnTranslateTo"), x, y, z, vel)
 	);
 }
+
+void BingleEventInvoker::StopTranslation() {
+	g_translateToRegs.ForEach(
+		EventQueueFunctor1<UInt32>(BSFixedString("OnStopTranslation"), 0)
+	);
+}

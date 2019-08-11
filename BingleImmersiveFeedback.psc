@@ -79,6 +79,10 @@ Event OnTranslateTo(float x, float y, float z, float vel)
 	translateTarget.TranslateTo(x, y, z, translateTarget.GetAngleX(), translateTarget.GetAngleY(), translateTarget.GetAngleZ(), vel, 0)
 EndEvent
 
+Event OnStopTranslation(int i)
+	translateTarget.StopTranslation()
+EndEvent
+
 Event OnAnimationEvent(ObjectReference akSource, string asEventName)
 	EvaluateEvent(asEventName)
 	;Debug.Notification(asEventName + " fired.")

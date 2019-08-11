@@ -644,6 +644,7 @@ public:
 	static void SyncConfig(UInt32 ctype, float v);
 	static void TranslateToTarget(Actor *a);
 	static void TranslateTo(float x, float y, float z, float vel);
+	static void StopTranslation();
 };
 
 extern MenuEventHandler				g_menuEventHandler;

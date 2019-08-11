@@ -2,6 +2,7 @@
 #include <thread>
 #include <functional>
 #include "SKSE/GameReferences.h"
+#include "SKSE/PapyrusEvents.h"
 
 template<typename ret, typename arg, typename arg2>
 using fn = std::function<ret(arg, arg2)>;
@@ -13,8 +14,14 @@ class AimHelperThread {
 			while (isRunning) {
 				if (target != nullptr) {
 					//Prevent execution on player killmove, dead targets
-					if(!(*g_thePlayer)->flags2.killMove && target->formType == kFormType_Character && !target->IsDead(1))
-						func(target, wait);
+					if(target->formType == kFormType_Character && !target->IsDead(1))
+						if(!(*g_thePlayer)->flags2.killMove)
+							func(target, wait);
+						else {
+							isRunning = false;
+							BingleEventInvoker::TranslateToTarget(*g_thePlayer);
+							BingleEventInvoker::StopTranslation();
+						}
 				}
 				std::this_thread::sleep_for(std::chrono::microseconds(8333));
 			}
