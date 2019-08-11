@@ -61,7 +61,7 @@ namespace BingleImmersiveImpact {
 	//The core funciton of the mod.
 	//This function is ran when the papyrus script receives OnAnimationEvent event.
 	void EvaluateEvent(StaticFunctionTag *base, BSFixedString event) {
-		//_MESSAGE("Func ran");
+		//_MESSAGE("%s", event);
 
 		if (event == s_as) {
 			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_Offset]);

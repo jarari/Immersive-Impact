@@ -12,13 +12,13 @@ void AimHelperThread::RequestThread(fn<void, Actor*, float> func, Actor* target,
 }
 
 void AimHelperThread::StartThread() {
-	if (isRunning)
+	if (_t.joinable())
 		return;
 	isRunning = true;
 }
 
 void AimHelperThread::StopThread() {
-	if (!isRunning)
+	if (!_t.joinable())
 		return;
 	isRunning = false;
 	_t.join();

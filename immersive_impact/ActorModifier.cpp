@@ -233,10 +233,10 @@ TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 			}
 			else {
 				bool bbxExists = false;
-				if (target->GetNiNode()->m_extraDataLen > 0) {
+				if (target->GetNiNode() != nullptr && target->GetNiNode()->m_extraDataLen > 0) {
 					for (int i = 0; i < target->GetNiNode()->m_extraDataLen; i++) {
 						NiExtraData* exData = target->GetNiNode()->m_extraData[i];
-						if (strcmp(exData->m_pcName, "BBX") == 0) {
+						if (exData->m_pcName && strlen(exData->m_pcName) > 0 && strcmp(exData->m_pcName, "BBX") == 0) {
 							bx = (UInt32)round(*((float*)((char*)exData + 0x18)));
 							bx2 = 0;
 							by = (UInt32)round(*((float*)((char*)exData + 0x1C)));
@@ -464,7 +464,6 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	if (aimTarget == nullptr)
 		return;
 	AimHelperThread::RequestThread(fn<void, Actor*, float>(LookAtRef), aimTarget, td.size);
-
 	//No need to move the player backward
 	//The size is multiplied by 2 to prevent the player from teleporting into the target.
 	float tpdist = aimHelperMinDist + td.size * 2;
