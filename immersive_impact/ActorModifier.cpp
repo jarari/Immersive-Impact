@@ -104,13 +104,12 @@ void NormalizeVector(NiPoint3& vec) {
 }
 
 void GetNiNodeForward(NiNode* node, NiPoint3* vecnorm) {
-	float x = -node->m_localTransform.rot.data[1][0];
-	float y = node->m_localTransform.rot.data[0][0];
-	float z = node->m_localTransform.rot.data[2][1];
-	NormalizeVector(x, y, z);
-	vecnorm->x = x;
-	vecnorm->y = y;
-	vecnorm->z = z;
+	NiPoint3 fwd(0, 1, 0);
+	fwd = node->m_worldTransform.rot * fwd;
+	NormalizeVector(fwd);
+	vecnorm->x = fwd.x;
+	vecnorm->y = fwd.y;
+	vecnorm->z = fwd.z;
 }
 
 void GetCameraForward(TESCamera* cam, NiPoint3* vecnorm) {
@@ -186,6 +185,28 @@ void SetMatrix33(float a, float b, float c, float d, float e, float f, float g, 
 	mat.data[2][2] = i;
 }
 
+void GetRefForward(float pitch, float yaw, float roll, NiPoint3* vec) {
+	NiMatrix33 m_roll;
+	SetMatrix33(cos(roll), -sin(roll), 0,
+		sin(roll), cos(roll), 0,
+		0, 0, 1,
+		m_roll);
+	NiMatrix33 m_pitch;
+	SetMatrix33(1, 0, 0,
+		0, cos(pitch), -sin(pitch),
+		0, sin(pitch), cos(pitch),
+		m_pitch);
+	NiMatrix33 m_yaw;
+	SetMatrix33(cos(yaw), 0, sin(yaw),
+		0, 1, 0,
+		-sin(yaw), 0, cos(yaw),
+		m_yaw);
+	NiPoint3 fwd = m_yaw * m_pitch * m_roll * NiPoint3(1, 0, 0);
+	vec->x = fwd.x;
+	vec->y = fwd.y;
+	vec->z = fwd.z;
+}
+
 TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 	tArray<UInt32>* actorHandles = &(*playerCellInfo)->actorHandles;
 	if (actorHandles == nullptr || actorHandles->count == 0)
@@ -258,26 +279,10 @@ TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 			float sizey = (by + by2) / 2.0f;
 
 			NiPoint3 targetForward;
-			float roll = target->rot.z;
-			NiMatrix33 m_roll;
-			SetMatrix33(cos(roll), -sin(roll), 0,
-						sin(roll),	cos(roll),		0,
-						0,			0,				1,
-						m_roll);
-			float pitch = target->rot.x;
-			NiMatrix33 m_pitch;
-			SetMatrix33(1, 0, 0,
-						0,			cos(pitch),		-sin(pitch), 
-						0,			sin(pitch),		cos(pitch),
-						m_pitch);
-			float yaw = target->rot.y;
-			NiMatrix33 m_yaw;
-			SetMatrix33(cos(yaw), 0, sin(yaw),
-						0,			1,				0, 
-						-sin(yaw),	0,				cos(yaw),
-						m_yaw);
-			targetForward = m_yaw * m_pitch * m_roll * NiPoint3(1, 0, 0);
-			float pt_dot = targetForward.x * camForward.x + targetForward.y * camForward.y + targetForward.z * camForward.z;
+			GetRefForward(target->rot.x, target->rot.y, target->rot.z, &targetForward);
+
+			NormalizeVector(dx, dy, dz);
+			float pt_dot = targetForward.x * dx + targetForward.y * dy + targetForward.z * dz;
 			float pt_ang = std::acos(pt_dot) * 180.0f / M_PI;
 			UInt16 r;
 			//If the angle between target's forward and cam's forward is bigger than 45 and smaller than 135, 
@@ -292,7 +297,6 @@ TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 
 			if (dd <= actualMaxDistance && target != player)
 			{
-				NormalizeVector(dx, dy, dz);
 				float dot = dx * camForward.x + dy * camForward.y + dz * camForward.z;
 				float ang = std::acos(dot) * 180.0f / M_PI;
 
@@ -465,8 +469,7 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 		return;
 	AimHelperThread::RequestThread(fn<void, Actor*, float>(LookAtRef), aimTarget, td.size);
 	//No need to move the player backward
-	//The size is multiplied by 2 to prevent the player from teleporting into the target.
-	float tpdist = aimHelperMinDist + td.size * 2;
+	float tpdist = aimHelperMinDist + td.size;
 	if (tpdist > td.dd) {
 		aimTarget = nullptr;
 		return;
