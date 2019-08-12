@@ -79,7 +79,6 @@ void deflectAttack(Actor* actor, ActiveEffect* ae, bool playSound = true) {
 }
 
 bool canKnockdown(Actor* actor) {
-	_MESSAGE("%i", ((int)(actor->race->data.raceFlags & TESRace::kRace_NoKnockdowns) - TESRace::kRace_NoKnockdowns));
 	return ((int)(actor->race->data.raceFlags & TESRace::kRace_NoKnockdowns) - TESRace::kRace_NoKnockdowns);
 }
 
@@ -93,10 +92,8 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	Character* target = (Character*)evn->target;
 	if((evn->caster->formType == kFormType_Character && ((Character*)(evn->caster))->flags2.killMove) || target->flags2.killMove || target->IsDead(1))
 		return kEvent_Continue;
-	_MESSAGE("killmove, dead check");
 	if (!canKnockdown(target) && target != *g_thePlayer)
 		return kEvent_Continue;
-	_MESSAGE("knockdown check");
 
 	ActiveEffect* ae = GetActiveEffectFromActor(target);
 	if (ae == nullptr)
