@@ -1,4 +1,4 @@
-LIBRARY	"plugin_example"
+LIBRARY	"Immersive Impact"
 EXPORTS
 SKSEPlugin_Query
 SKSEPlugin_Load

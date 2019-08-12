@@ -113,13 +113,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\common\common_vc9.vcxproj">
-      <Project>{20c6411c-596f-4b85-be4e-8bc91f59d8a6}</Project>
-      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="CommandTable.cpp" />
     <ClCompile Include="GameReferences.cpp" />
     <ClCompile Include="GameTypes.cpp" />
