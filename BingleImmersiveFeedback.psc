@@ -2,25 +2,16 @@ Scriptname BingleImmersiveFeedback extends ReferenceAlias
 
 BingleImmersiveFeedbackMCM property pMCMScript auto
 Weapon property Unarmed auto
+Sound property BingleDeflect auto
 
-Function RegisterForFistRequest() native
-Function RegisterForInitRequest() native
-Function RegisterForNotificationRequest() native
-Function RegisterForMessageBoxRequest() native
+Function RegisterMainScript() native
 Function EvaluateEvent(string eventname) global native
-Function RegisterForConfigRequest() native
-Function RegisterForTranslateToRequest() native
 
 Actor player
 Actor translateTarget
 Function InitializeStuff()
 	pMCMScript.UpdateIFState(1)
 	player = GetActorReference()
-	RegisterForFistRequest()
-	RegisterForNotificationRequest()
-	RegisterForMessageBoxRequest()
-	RegisterForConfigRequest()
-	RegisterForTranslateToRequest()
 	UnregisterForAnimationEvent(player, "attackStop")
 	UnregisterForAnimationEvent(player, "preHitFrame")
 	UnregisterForAnimationEvent(player, "weaponSwing")
@@ -44,11 +35,11 @@ EndFunction
 
 Event OnInit()
 	pMCMScript.UpdateIFState(0)
-	RegisterForInitRequest()
+	RegisterMainScript()
 EndEvent
 
 Event OnPlayerLoadGame()
-	RegisterForInitRequest()
+	RegisterMainScript()
 EndEvent
 
 Event OnSyncConfig(int type, float v)
@@ -81,6 +72,10 @@ EndEvent
 
 Event OnStopTranslation(int i)
 	translateTarget.StopTranslation()
+EndEvent
+
+Event OnDeflectSoundPlay(ObjectReference obj)
+	BingleDeflect.Play(obj)
 EndEvent
 
 Event OnAnimationEvent(ObjectReference akSource, string asEventName)
