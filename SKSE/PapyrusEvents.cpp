@@ -18,13 +18,7 @@ RegistrationSetHolder<NullParameters>						g_cameraEventRegs;
 RegistrationSetHolder<NullParameters>						g_crosshairRefEventRegs;
 RegistrationMapHolder<UInt32>								g_actionEventRegs;
 
-RegistrationSetHolder<NullParameters>						g_fistRequestRegs;
-RegistrationSetHolder<NullParameters>						g_initRequestRegs;
-RegistrationSetHolder<NullParameters>						g_notiRequestRegs;
-RegistrationSetHolder<NullParameters>						g_msgboxRequestRegs;
-RegistrationSetHolder<NullParameters>						g_configRegs;
-RegistrationSetHolder<NullParameters>						g_equipRequestRegs;
-RegistrationSetHolder<NullParameters>						g_translateToRegs;
+RegistrationSetHolder<NullParameters>						g_mainScriptRegs;
 
 EventDispatcher<SKSEModCallbackEvent>	g_modCallbackEventDispatcher;
 EventDispatcher<SKSECameraEvent>		g_cameraEventDispatcher;
@@ -320,59 +314,61 @@ EventResult ActionEventHandler::ReceiveEvent(SKSEActionEvent * evn, EventDispatc
 }
 
 void BingleEventInvoker::EquipFist(Actor * a) {
-	_MESSAGE("Requesting papyrus for a fist.");
-	g_fistRequestRegs.ForEach(
+	g_mainScriptRegs.ForEach(
 		EventQueueFunctor1<TESObjectREFR*>(BSFixedString("OnFistRequested"), (TESObjectREFR*)a)
 	);
 }
 
 void BingleEventInvoker::EquipItem(Actor * a, TESForm * wep, UInt32 choice) {
-	g_equipRequestRegs.ForEach(
+	g_mainScriptRegs.ForEach(
 		EventQueueFunctor4<TESObjectREFR*, TESForm*, UInt32, UInt32>(BSFixedString("OnEquipRequested"), (TESObjectREFR*)a, (TESForm*)wep, choice, NULL)
 	);
 }
 
 void BingleEventInvoker::InitializeRequest() {
-	_MESSAGE("Requesting papyrus for initialization.");
-	g_initRequestRegs.ForEach(
+	g_mainScriptRegs.ForEach(
 		EventQueueFunctor1<UInt32>(BSFixedString("OnInitializeRequested"), 0)
 	);
 }
 
 void BingleEventInvoker::SendNotification(BSFixedString msg) {
-	_MESSAGE("Requesting papyrus for a notification.");
-	g_fistRequestRegs.ForEach(
+	g_mainScriptRegs.ForEach(
 		EventQueueFunctor1<BSFixedString>(BSFixedString("OnNotificationRequest"), msg)
 	);
 }
 
 void BingleEventInvoker::ShowMessageBox(BSFixedString msg) {
-	_MESSAGE("Requesting papyrus for a message box.");
-	g_fistRequestRegs.ForEach(
+	g_mainScriptRegs.ForEach(
 		EventQueueFunctor1<BSFixedString>(BSFixedString("OnMessageBoxRequest"), msg)
 	);
 }
 
 void BingleEventInvoker::SyncConfig(UInt32 ctype, float v) {
-	g_configRegs.ForEach(
+	g_mainScriptRegs.ForEach(
 		EventQueueFunctor2<UInt32, float>(BSFixedString("OnSyncConfig"), ctype, v)
 	);
 }
 
 void BingleEventInvoker::TranslateToTarget(Actor* a) {
-	g_translateToRegs.ForEach(
+	g_mainScriptRegs.ForEach(
 		EventQueueFunctor1<TESObjectREFR*>(BSFixedString("OnTranslateToTarget"), (TESObjectREFR*)a)
 	);
 }
 
 void BingleEventInvoker::TranslateTo(float x, float y, float z, float vel) {
-	g_translateToRegs.ForEach(
+	g_mainScriptRegs.ForEach(
 		EventQueueFunctor4<float, float, float, float>(BSFixedString("OnTranslateTo"), x, y, z, vel)
 	);
 }
 
 void BingleEventInvoker::StopTranslation() {
-	g_translateToRegs.ForEach(
+	g_mainScriptRegs.ForEach(
 		EventQueueFunctor1<UInt32>(BSFixedString("OnStopTranslation"), 0)
+	);
+}
+
+void BingleEventInvoker::PlayDeflectSound(TESObjectREFR* obj) {
+	g_mainScriptRegs.ForEach(
+		EventQueueFunctor1<TESObjectREFR*>(BSFixedString("OnDeflectSoundPlay"), obj)
 	);
 }

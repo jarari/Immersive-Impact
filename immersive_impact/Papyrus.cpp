@@ -141,40 +141,12 @@ namespace BingleImmersiveImpact {
 		}
 	}
 
-	//Functions below are used to register for papyrus events.
-	//This function registers for OnFistRequest event on papyrus
-	void RegisterForFistRequest(BGSRefAlias * thisForm) {
+	//This function registers the main script to SKSE.
+	void RegisterMainScript(BGSRefAlias * thisForm) {
 		if (!thisForm)
 			return;
-		_MESSAGE("Registering for fist request event.");
-		g_fistRequestRegs.Register<BGSRefAlias>(kFormType_ReferenceAlias, thisForm);
-	}
-
-	//This function registers for OnInitializeRequested event on papyrus
-	void RegisterForInitRequest(BGSRefAlias * thisForm) {
-		if (!thisForm)
-			return;
-		_MESSAGE("Registering for init request event.");
-		g_initRequestRegs.Register<BGSRefAlias>(kFormType_ReferenceAlias, thisForm);
+		g_mainScriptRegs.Register<BGSRefAlias>(kFormType_ReferenceAlias, thisForm);
 		BingleEventInvoker::InitializeRequest();
-	}
-
-	//These functions below are for debugging purposes.
-	//Especially, notification request and messagebox request might come in handy when you need a real-time, visualized debugging functions.
-	//This function registers for OnNotificationRequest event on papyrus
-	void RegisterForNotificationRequest(BGSRefAlias * thisForm) {
-		if (!thisForm)
-			return;
-		_MESSAGE("Registering for notifcation request event.");
-		g_notiRequestRegs.Register<BGSRefAlias>(kFormType_ReferenceAlias, thisForm);
-	}
-
-	//This function registers for OnMessageBoxRequest event on papyrus
-	void RegisterForMessageBoxRequest(BGSRefAlias * thisForm) {
-		if (!thisForm)
-			return;
-		_MESSAGE("Registering for messagebox request event.");
-		g_msgboxRequestRegs.Register<BGSRefAlias>(kFormType_ReferenceAlias, thisForm);
 	}
 
 	void UpdateConfig(StaticFunctionTag *base, UInt32 formId, UInt32 configtype, float v) {
@@ -242,7 +214,7 @@ namespace BingleImmersiveImpact {
 			case ConfigType::Speed_SwingFist:
 				return 1.7f;
 			case ConfigType::Speed_Post:
-				return 1.6f;
+				return 1.25f;
 			case ConfigType::RestrainMovement:
 				return 0;
 			case ConfigType::AimHelper:
@@ -253,20 +225,6 @@ namespace BingleImmersiveImpact {
 				return 0;
 		}
 	}
-
-	void RegisterForConfigRequest(BGSRefAlias * thisForm) {
-		if (!thisForm)
-			return;
-		_MESSAGE("Registering for config event.");
-		g_configRegs.Register<BGSRefAlias>(kFormType_ReferenceAlias, thisForm);
-	}
-
-	void RegisterForTranslateToRequest(BGSRefAlias* thisForm) {
-		if (!thisForm)
-			return;
-		_MESSAGE("Registering for translateto event.");
-		g_translateToRegs.Register<BGSRefAlias>(kFormType_ReferenceAlias, thisForm);
-	}
 }
 
 
@@ -276,28 +234,13 @@ bool Papyrus::RegisterFuncs(VMClassRegistry * registry) {
 	registry->RegisterFunction(
 		new NativeFunction1 <StaticFunctionTag, void, BSFixedString>("EvaluateEvent", "BingleImmersiveFeedback", BingleImmersiveImpact::EvaluateEvent, registry));
 	registry->RegisterFunction(
-		new NativeFunction0 <BGSRefAlias, void>("RegisterForFistRequest", "BingleImmersiveFeedback", BingleImmersiveImpact::RegisterForFistRequest, registry));
-	registry->SetFunctionFlags("BingleImmersiveFeedback", "RegisterForFistRequest", VMClassRegistry::kFunctionFlag_NoWait);
-	registry->RegisterFunction(
-		new NativeFunction0 <BGSRefAlias, void>("RegisterForInitRequest", "BingleImmersiveFeedback", BingleImmersiveImpact::RegisterForInitRequest, registry));
-	registry->SetFunctionFlags("BingleImmersiveFeedback", "RegisterForInitRequest", VMClassRegistry::kFunctionFlag_NoWait);
-	registry->RegisterFunction(
-		new NativeFunction0 <BGSRefAlias, void>("RegisterForNotificationRequest", "BingleImmersiveFeedback", BingleImmersiveImpact::RegisterForNotificationRequest, registry));
-	registry->SetFunctionFlags("BingleImmersiveFeedback", "RegisterForNotificationRequest", VMClassRegistry::kFunctionFlag_NoWait);
-	registry->RegisterFunction(
-		new NativeFunction0 <BGSRefAlias, void>("RegisterForMessageBoxRequest", "BingleImmersiveFeedback", BingleImmersiveImpact::RegisterForMessageBoxRequest, registry));
-	registry->SetFunctionFlags("BingleImmersiveFeedback", "RegisterForMessageBoxRequest", VMClassRegistry::kFunctionFlag_NoWait);
+		new NativeFunction0 <BGSRefAlias, void>("RegisterMainScript", "BingleImmersiveFeedback", BingleImmersiveImpact::RegisterMainScript, registry));
+	registry->SetFunctionFlags("BingleImmersiveFeedback", "RegisterMainScript", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->RegisterFunction(
 		new NativeFunction3 <StaticFunctionTag, void, UInt32, UInt32, float>("UpdateConfig", "BingleImmersiveFeedbackMCM", BingleImmersiveImpact::UpdateConfig, registry));
 	registry->RegisterFunction(
 		new NativeFunction3 <StaticFunctionTag, void, UInt32, UInt32, float>("UpdateSaveConfig", "BingleImmersiveFeedbackMCM", BingleImmersiveImpact::UpdateSaveConfig, registry));
 	registry->RegisterFunction(
 		new NativeFunction0 <StaticFunctionTag, void>("SaveConfig", "BingleImmersiveFeedbackMCM", BingleImmersiveImpact::SaveConfig, registry));
-	registry->RegisterFunction(
-		new NativeFunction0 <BGSRefAlias, void>("RegisterForConfigRequest", "BingleImmersiveFeedback", BingleImmersiveImpact::RegisterForConfigRequest, registry));
-	registry->SetFunctionFlags("BingleImmersiveFeedback", "RegisterForConfigRequest", VMClassRegistry::kFunctionFlag_NoWait);
-	registry->RegisterFunction(
-		new NativeFunction0 <BGSRefAlias, void>("RegisterForTranslateToRequest", "BingleImmersiveFeedback", BingleImmersiveImpact::RegisterForTranslateToRequest, registry));
-	registry->SetFunctionFlags("BingleImmersiveFeedback", "RegisterForTranslateToRequest", VMClassRegistry::kFunctionFlag_NoWait);
 	return true;
 }

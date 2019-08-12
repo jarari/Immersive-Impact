@@ -492,13 +492,7 @@ extern RegistrationMapHolder<BSFixedString,ModCallbackParameters>	g_modCallbackR
 extern RegistrationSetHolder<NullParameters>						g_cameraEventRegs;
 extern RegistrationSetHolder<NullParameters>						g_crosshairRefEventRegs;
 extern RegistrationMapHolder<UInt32>								g_actionEventRegs;
-extern RegistrationSetHolder<NullParameters>						g_fistRequestRegs;
-extern RegistrationSetHolder<NullParameters>						g_initRequestRegs;
-extern RegistrationSetHolder<NullParameters>						g_notiRequestRegs;
-extern RegistrationSetHolder<NullParameters>						g_msgboxRequestRegs;
-extern RegistrationSetHolder<NullParameters>						g_configRegs;
-extern RegistrationSetHolder<NullParameters>						g_equipRequestRegs;
-extern RegistrationSetHolder<NullParameters>						g_translateToRegs;
+extern RegistrationSetHolder<NullParameters>						g_mainScriptRegs;
 
 struct SKSEModCallbackEvent
 {
@@ -645,6 +639,7 @@ public:
 	static void TranslateToTarget(Actor *a);
 	static void TranslateTo(float x, float y, float z, float vel);
 	static void StopTranslation();
+	static void PlayDeflectSound(TESObjectREFR* obj);
 };
 
 extern MenuEventHandler				g_menuEventHandler;
