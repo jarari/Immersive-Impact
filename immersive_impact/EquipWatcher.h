@@ -4,6 +4,7 @@
 class EquipWatcher : public BSTEventSink<TESEquipEvent> {
 protected:
 	static EquipWatcher *instance;
+	static void OnFirstLoad(TESEquipEvent* evn);
 public:
 	EquipWatcher() {
 		if (instance)

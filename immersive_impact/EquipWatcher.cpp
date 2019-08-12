@@ -30,6 +30,20 @@ void EquipWatcher::ResetHook() {
 	isTwoHanded = false;
 }
 
+void EquipWatcher::OnFirstLoad(TESEquipEvent* evn) {
+	isInitialized = true;
+	ConfigHandler::LoadConfig(0);
+	TESForm* rweap = ((Actor*)(evn->unk_00))->GetEquippedObject(false);
+	TESForm* lweap = ((Actor*)(evn->unk_00))->GetEquippedObject(true);
+	if (rweap) {
+		ConfigHandler::LoadConfig(rweap->formID, ((TESObjectWEAP*)rweap)->type(), 1);
+	}
+	if (lweap) {
+		ConfigHandler::LoadConfig(lweap->formID, ((TESObjectWEAP*)lweap)->type(), 0);
+	}
+	ScanArmorWeight();
+}
+
 void EquipWatcher::ScanArmorWeight() {
 	PlayerCharacter* player = (*g_thePlayer);
 	playerArmorWeight = 0.0f;
@@ -63,16 +77,7 @@ EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESE
 			&& !((Actor*)evn->unk_00)->equippingMagicItems[0] && !((Actor*)evn->unk_00)->equippingMagicItems[1])
 			MenuCloseWatcher::RequestAction((Actor*)(evn->unk_00));
 		if (!isInitialized && (*g_thePlayer)->GetNiNode()) {
-			isInitialized = true;
-			ConfigHandler::LoadConfig(0);
-			TESForm *rweap = ((Actor*)(evn->unk_00))->GetEquippedObject(false);
-			TESForm *lweap = ((Actor*)(evn->unk_00))->GetEquippedObject(true);
-			if (rweap) {
-				ConfigHandler::LoadConfig(rweap->formID, ((TESObjectWEAP*)rweap)->type(), 1);
-			}
-			if (lweap) {
-				ConfigHandler::LoadConfig(lweap->formID, ((TESObjectWEAP*)lweap)->type(), 0);
-			}
+			OnFirstLoad(evn);
 		}
 		if (evn->unk_01) {
 			TESForm *equipment = LookupFormByID(evn->unk_01);
