@@ -2,6 +2,7 @@
 #include "SKSE/PapyrusEvents.h"
 #include "MenuCloseWatcher.h"
 #include "EquipWatcher.h"
+#include "HitFeedback.h"
 
 GameLoadWatcher* GameLoadWatcher::instance = nullptr;
 
@@ -18,8 +19,9 @@ void GameLoadWatcher::InitHook() {
 
 EventResult GameLoadWatcher::ReceiveEvent(TESLoadGameEvent* evn, EventDispatcher<TESLoadGameEvent>* src) {
 	_MESSAGE("New game loaded.");
+	g_mainScriptRegs.Clear();
 	MenuCloseWatcher::ResetHook();
 	EquipWatcher::ResetHook();
-	EquipWatcher::ScanArmorWeight();
+	HitFeedback::ResetHook();
 	return kEvent_Continue;
 }
