@@ -487,7 +487,6 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	NormalizeVector(dx, dy, dz);
 	dx *= tpdist;
 	dy *= tpdist;
-
 	//player->pos = pos;
 	//MoveRefrToPosition(player, &refHandle, player->parentCell, CALL_MEMBER_FN(player, GetWorldspace)() , &pos, &(player->rot));
 	//x2 at armorWeight 0, x1.1 at armorWeight 100(Heaviest armor set is around 80)

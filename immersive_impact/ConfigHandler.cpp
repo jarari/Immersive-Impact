@@ -61,7 +61,7 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 	}
 	char formIdstr[32];
 	sprintf_s(formIdstr, "%lu", formId);
-	_MESSAGE("Loaindg ini");
+	_MESSAGE("Loading ini");
 	if (formId == 0) {
 		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_Pre), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Pre)), NULL, NULL)));
 		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_Swing1h), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Swing1h)), NULL, NULL)));
