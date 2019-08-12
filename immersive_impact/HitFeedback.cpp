@@ -72,10 +72,15 @@ void deflectAttack(Actor* actor, ActiveEffect* ae, bool playSound = true) {
 	//ae->magnitude = 0;
 	//ae->duration = ae->elapsed;
 	if (actor != *g_thePlayer) {
-		actor->animGraphHolder.SendAnimationEvent("bleedOutStop");
+		actor->animGraphHolder.SendAnimationEvent("staggerStop");
 		actor->animGraphHolder.SendAnimationEvent("attackStart");
 	}
 	BingleEventInvoker::PlayDeflectSound(actor);
+}
+
+bool canKnockdown(Actor* actor) {
+	_MESSAGE("%i", ((int)(actor->race->data.raceFlags & TESRace::kRace_NoKnockdowns) - TESRace::kRace_NoKnockdowns));
+	return ((int)(actor->race->data.raceFlags & TESRace::kRace_NoKnockdowns) - TESRace::kRace_NoKnockdowns);
 }
 
 float staggerResetTime = 2.0f;
@@ -88,8 +93,10 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	Character* target = (Character*)evn->target;
 	if((evn->caster->formType == kFormType_Character && ((Character*)(evn->caster))->flags2.killMove) || target->flags2.killMove || target->IsDead(1))
 		return kEvent_Continue;
-	if (!(target->race->data.raceFlags & TESRace::kRace_NoKnockdowns - TESRace::kRace_NoKnockdowns) && target != *g_thePlayer)
+	_MESSAGE("killmove, dead check");
+	if (!canKnockdown(target) && target != *g_thePlayer)
 		return kEvent_Continue;
+	_MESSAGE("knockdown check");
 
 	ActiveEffect* ae = GetActiveEffectFromActor(target);
 	if (ae == nullptr)
@@ -106,6 +113,8 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	TESObjectWEAP* wep = (TESObjectWEAP*)LookupFormByID(evn->sourceFormID);
 	if (wep == nullptr)
 		return kEvent_Continue;
+	PrintHEX(evn->sourceFormID);
+	PrintHEX((UInt32)evn->caster);
 	float bowDivider = 1.0f;
 	if (wep->type() == TESObjectWEAP::GameData::kType_Bow
 		|| wep->type() == TESObjectWEAP::GameData::kType_Bow2
@@ -153,7 +162,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 			return kEvent_Continue;
 		}
 		else {
-			target->animGraphHolder.SendAnimationEvent("bleedOutStop");
+			target->animGraphHolder.SendAnimationEvent("staggerStop");
 			CALL_MEMBER_FN(&(target->animGraphHolder), SetAnimationVariableFloat)(BSFixedString("staggerDirection"), 0.5f - (target->rot.z - evn->caster->rot.z) / M_PI);
 			CALL_MEMBER_FN(&(target->animGraphHolder), SetAnimationVariableFloat)(BSFixedString("staggerMagnitude"), staggerMagnitude);
 			target->animGraphHolder.SendAnimationEvent("staggerStart");
