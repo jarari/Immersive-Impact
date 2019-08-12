@@ -23,8 +23,10 @@ int sliderChargeMulOID_S
 int toggleRestrainMovementOID_B
 int toggleAimHelperOID_B
 int toggleHitFeedbackOID_B
+int resetQuestOID_B
 
 ; Public
+Quest property _BingleImmersiveFeedbackHelper auto
 BingleImmersiveFeedback property pBingleImmersiveFeedback auto
 float property valuePreAttackSpeed auto
 float property valueSwingSpeed auto
@@ -193,7 +195,8 @@ event OnPageReset(string a_page)
 		toggleRestrainMovementOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_RESTRAINMOVEMENT", valueRestrainMovement)
 		toggleAimHelperOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_AIMHELPER", valueAimHelper)
 		sliderChargeMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_CHARGEMUL", valueChargeMul, "x {2}")
-		;toggleHitFeedbackOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_HITFEEDBACK", valueHitFeedback)
+		toggleHitFeedbackOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_HITFEEDBACK", valueHitFeedback)
+		resetQuestOID_B = AddTextOption("", "$BINGLE_PAGE_SETTINGS_RESETQUEST", OPTION_FLAG_NONE)
 		string stateText = "$BINGLE_IF_NOTINIT"
 		int opt = OPTION_FLAG_DISABLED
 		if(IFState == 1)
@@ -257,12 +260,25 @@ event OnOptionSelect(int option)
 		else
 			UpdateSaveConfig(0, 13, 0)
 		endif
+	elseif (option == resetQuestOID_B)
+		SetOptionFlags(option, OPTION_FLAG_DISABLED)
+		Utility.Wait(1)
+		Debug.Notification("$BINGLE_QUESTRESET_STOP")
+		_BingleImmersiveFeedbackHelper.Stop()
+		Utility.Wait(1)
+		Debug.Notification("$BINGLE_QUESTRESET_RESET")
+		_BingleImmersiveFeedbackHelper.Reset()
+		(_BingleImmersiveFeedbackHelper.GetAlias(0) as ReferenceAlias).ForceRefTo(Game.GetPlayer())
+		(_BingleImmersiveFeedbackHelper.GetAlias(1) as ReferenceAlias).ForceRefTo(Game.GetPlayer())
+		Utility.Wait(1)
+		Debug.Notification("$BINGLE_QUESTRESET_START")
+		_BingleImmersiveFeedbackHelper.Start()
 	endIf
 endEvent
 
 event OnOptionSliderOpen(int option)
 	SetSliderDialogInterval(0.05)
-	SetSliderDialogRange(0.1, 2.5)
+	SetSliderDialogRange(0.1, 3.0)
 	if(option == sliderPreAttackSpeedOID_S)
 		SetSliderDialogStartValue(valuePreAttackSpeed)
 		SetSliderDialogDefaultValue(defaultPreAttackSpeed)
@@ -285,7 +301,7 @@ event OnOptionSliderOpen(int option)
 		
 	elseif(option == sliderBaseSpeedOID_S)
 		SetSliderDialogInterval(0.05)
-		SetSliderDialogRange(0.1, 1.6)
+		SetSliderDialogRange(0.1, 1.25)
 		SetSliderDialogStartValue(valueBaseSpeed)
 		SetSliderDialogDefaultValue(defaultSwingSpeedFist)
 		

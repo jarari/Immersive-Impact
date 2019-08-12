@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include "SKSE/GameEvents.h"
 #define EVENT TESHitEvent
 
@@ -9,6 +10,7 @@ protected:
 	static std::string className;
 	static bool feedbackEnabled;
 public:
+	static std::vector<std::pair<Actor*, ActiveEffect*>> storedActiveEffects;
 	HitFeedback() {
 		if (instance)
 			delete(instance);
@@ -22,6 +24,8 @@ public:
 	virtual ~HitFeedback();
 
 	static void InitHook();
+
+	static void ResetHook();
 
 	static void EnableFeedback(bool b);
 
