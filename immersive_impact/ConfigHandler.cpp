@@ -1,7 +1,7 @@
 #include "ConfigHandler.h"
 #include "Papyrus.h"
 #include "ActorModifier.h"
-#include "SKSE/PapyrusEvents.h"
+#include "BingleEventInvoker.h"
 #include <sys/stat.h>
 #include <immersive_impact\HitFeedback.h>
 

@@ -492,7 +492,6 @@ extern RegistrationMapHolder<BSFixedString,ModCallbackParameters>	g_modCallbackR
 extern RegistrationSetHolder<NullParameters>						g_cameraEventRegs;
 extern RegistrationSetHolder<NullParameters>						g_crosshairRefEventRegs;
 extern RegistrationMapHolder<UInt32>								g_actionEventRegs;
-extern RegistrationSetHolder<NullParameters>						g_mainScriptRegs;
 
 struct SKSEModCallbackEvent
 {
@@ -627,20 +626,6 @@ public:
 	virtual	EventResult		ReceiveEvent(SKSEActionEvent * evn, EventDispatcher<SKSEActionEvent> * dispatcher);
 };
 
-class TESObjectWEAP;
-class BingleEventInvoker {
-public:
-	static void EquipFist(Actor *a);
-	static void EquipItem(Actor *a, TESForm* wep, UInt32 choice);
-	static void InitializeRequest();
-	static void SendNotification(BSFixedString msg);
-	static void ShowMessageBox(BSFixedString msg);
-	static void SyncConfig(UInt32 ctype, float v);
-	static void TranslateToTarget(Actor *a);
-	static void TranslateTo(float x, float y, float z, float vel);
-	static void StopTranslation();
-	static void PlayDeflectSound(TESObjectREFR* obj);
-};
 
 extern MenuEventHandler				g_menuEventHandler;
 extern InputEventHandler			g_inputEventHandler;

@@ -1,5 +1,5 @@
 #include "GameLoadWatcher.h"
-#include "SKSE/PapyrusEvents.h"
+#include "BingleEventInvoker.h"
 #include "MenuCloseWatcher.h"
 #include "EquipWatcher.h"
 #include "HitFeedback.h"

@@ -1,5 +1,5 @@
 #include "AimHelperThread.h"
-#include "SKSE/PapyrusEvents.h"
+#include "BingleEventInvoker.h"
 
 bool AimHelperThread::isRunning = false;
 std::thread AimHelperThread::_t;
