@@ -1,10 +1,10 @@
 #pragma once
 #include "SKSE/GameEvents.h"
 
+class TESAmmo;
 class EquipWatcher : public BSTEventSink<TESEquipEvent> {
 protected:
 	static EquipWatcher *instance;
-	static void OnFirstLoad(TESEquipEvent* evn);
 public:
 	EquipWatcher() {
 		if (instance)
@@ -14,6 +14,7 @@ public:
 	}
 	static bool isInitialized;
 	static bool isTwoHanded;
+	static TESAmmo* equippedAmmo;
 
 	static EquipWatcher *GetInstance() {
 		return instance;
@@ -24,7 +25,9 @@ public:
 
 	static void ResetHook();
 
-	static void ScanArmorWeight();
+	static void OnFirstLoad();
+
+	static void ScanEquippedItems();
 
 	static float playerArmorWeight;
 

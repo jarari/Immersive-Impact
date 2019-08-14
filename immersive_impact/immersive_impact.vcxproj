@@ -116,6 +116,7 @@
   <ItemGroup>
     <ClCompile Include="ActorModifier.cpp" />
     <ClCompile Include="AimHelperThread.cpp" />
+    <ClCompile Include="BingleEventInvoker.cpp" />
     <ClCompile Include="GameLoadWatcher.cpp" />
     <ClCompile Include="ConfigHandler.cpp" />
     <ClCompile Include="EquipWatcher.cpp" />
@@ -130,6 +131,7 @@
     <ClInclude Include="..\simpleini-4.17\SimpleIni.h" />
     <ClInclude Include="ActorModifier.h" />
     <ClInclude Include="AimHelperThread.h" />
+    <ClInclude Include="BingleEventInvoker.h" />
     <ClInclude Include="GameLoadWatcher.h" />
     <ClInclude Include="ConfigHandler.h" />
     <ClInclude Include="EquipWatcher.h" />

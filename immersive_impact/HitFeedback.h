@@ -1,8 +1,47 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "SKSE/GameEvents.h"
+#include <SKSE/GameMenus.h>
+#include <SKSE/GameEvents.h>
+#include <SKSE/GameThreads.h>
+#include <SKSE/PluginAPI.h>
+#include <SKSE/Hooks_UI.h>
 #define EVENT TESHitEvent
+
+class BingleHitWaitNextFrame : public UIDelegate {
+public:
+	static BingleHitWaitNextFrame* Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, float bowDivider, DWORD addr);
+	virtual void Run();
+	virtual void Dispose();
+
+private:
+	DWORD addr;
+	ActiveEffect* ae;
+	Actor* attacker;
+	Actor* target;
+	TESHitEvent::Flags flags;
+	float bowDivider;
+};
+
+class HitFeedbackHelper : public IMenu {
+protected:
+	static HitFeedbackHelper* instance;
+	bool invoked = false;
+	int frameCounter = 0;
+public:
+	HitFeedbackHelper();
+	virtual ~HitFeedbackHelper();
+
+	static HitFeedbackHelper* GetInstance() {
+		return instance;
+	}
+
+	static void Register();
+
+	void InvokeAddTask(UIDelegate* task);
+
+	virtual void Render();
+};
 
 class HitFeedback : public BSTEventSink<EVENT> {
 protected:
@@ -11,14 +50,10 @@ protected:
 	static bool feedbackEnabled;
 public:
 	static std::vector<std::pair<Actor*, ActiveEffect*>> storedActiveEffects;
-	HitFeedback() {
-		if (instance)
-			delete(instance);
-		instance = this;
-		_MESSAGE((className + std::string(" instance created.")).c_str());
-	}
+	static float lastDamage;
+	HitFeedback();
 
-	HitFeedback* GetInstance() {
+	static HitFeedback* GetInstance() {
 		return instance;
 	}
 	virtual ~HitFeedback();

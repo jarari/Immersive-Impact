@@ -1,7 +1,8 @@
 #include "MenuCloseWatcher.h"
 #include "SKSE/PapyrusActor.h"
-#include "SKSE/PapyrusEvents.h"
+#include "BingleEventInvoker.h"
 #include "SKSE/GameMenus.h"
+#include <immersive_impact\EquipWatcher.h>
 
 MenuCloseWatcher *MenuCloseWatcher::instance = nullptr;
 bool MenuCloseWatcher::actionRequested = false;
@@ -35,12 +36,19 @@ EventResult MenuCloseWatcher::ReceiveEvent(MenuOpenCloseEvent * evn, EventDispat
 	if (actionRequested && !evn->opening) {
 		actionRequested = false;
 		_MESSAGE("Action requested, and the user is closing the menu...");
-		if (!actionTarget->GetNiNode())
+		if (!actionTarget || !actionTarget->GetNiNode())
 			return kEvent_Continue;
 		if (!actionTarget->GetEquippedObject(false) && !actionTarget->GetEquippedObject(true)
 			&& !actionTarget->equippingMagicItems[0] && !actionTarget->equippingMagicItems[1]) {
 			_MESSAGE("...and he's unarmed. Force equipping the hand weapon.");
 			BingleEventInvoker::EquipFist(actionTarget);
+		}
+	}
+	else if (EquipWatcher::isInitialized) {
+		UIStringHolder* uistr = UIStringHolder::GetSingleton();
+		if (uistr && (evn->menuName == uistr->mainMenu || evn->menuName == uistr->loadingMenu) && evn->opening) {
+			EquipWatcher::ResetHook();
+			_MESSAGE("Main menu or loading menu opening");
 		}
 	}
 	return kEvent_Continue;

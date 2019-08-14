@@ -11,6 +11,8 @@
     <ClCompile Include="RaceSwitchWatcher.cpp" />
     <ClCompile Include="GameLoadWatcher.cpp" />
     <ClCompile Include="AimHelperThread.cpp" />
+    <ClCompile Include="HitFeedback.cpp" />
+    <ClCompile Include="BingleEventInvoker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActorModifier.h" />
@@ -27,6 +29,8 @@
     <ClInclude Include="RaceSwitchWatcher.h" />
     <ClInclude Include="GameLoadWatcher.h" />
     <ClInclude Include="AimHelperThread.h" />
+    <ClInclude Include="HitFeedback.h" />
+    <ClInclude Include="BingleEventInvoker.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

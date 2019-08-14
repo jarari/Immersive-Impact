@@ -8,11 +8,14 @@
 #include <SKSE\GameRTTI.h>
 #include <SKSE\GameExtraData.h>
 #include <SKSE\PapyrusObjectReference.cpp>
+#include "HitFeedback.h"
+#include <SKSE/PapyrusActor.h>
 
 EquipWatcher *EquipWatcher::instance = nullptr;
 bool EquipWatcher::isInitialized = false;
 bool EquipWatcher::isTwoHanded = false;
 float EquipWatcher::playerArmorWeight = 0;
+TESAmmo *EquipWatcher::equippedAmmo = nullptr;
 
 EquipWatcher::~EquipWatcher() {
 }
@@ -30,21 +33,22 @@ void EquipWatcher::ResetHook() {
 	isTwoHanded = false;
 }
 
-void EquipWatcher::OnFirstLoad(TESEquipEvent* evn) {
+void EquipWatcher::OnFirstLoad() {
 	isInitialized = true;
 	ConfigHandler::LoadConfig(0);
-	TESForm* rweap = ((Actor*)(evn->unk_00))->GetEquippedObject(false);
-	TESForm* lweap = ((Actor*)(evn->unk_00))->GetEquippedObject(true);
+	TESForm* rweap = ((Actor*)(*g_thePlayer))->GetEquippedObject(false);
+	TESForm* lweap = ((Actor*)(*g_thePlayer))->GetEquippedObject(true);
 	if (rweap) {
 		ConfigHandler::LoadConfig(rweap->formID, ((TESObjectWEAP*)rweap)->type(), 1);
 	}
 	if (lweap) {
 		ConfigHandler::LoadConfig(lweap->formID, ((TESObjectWEAP*)lweap)->type(), 0);
 	}
-	ScanArmorWeight();
+	ScanEquippedItems();
+	HitFeedback::ResetHook();
 }
 
-void EquipWatcher::ScanArmorWeight() {
+void EquipWatcher::ScanEquippedItems() {
 	PlayerCharacter* player = (*g_thePlayer);
 	playerArmorWeight = 0.0f;
 	if (player->GetNiNode()) {
@@ -54,7 +58,7 @@ void EquipWatcher::ScanArmorWeight() {
 		tList<ExtraContainerChanges::EntryData>::Iterator it = objList->Begin();
 		while (!it.End()) {
 			ExtraContainerChanges::EntryData* extraData = it.Get();
-			if (extraData && extraData->type->GetFormType() == FormType::kFormType_Armor) {
+			if (extraData){
 				TESForm* form = extraData->type;
 				int baseCount = 0;
 				if (container)
@@ -62,8 +66,11 @@ void EquipWatcher::ScanArmorWeight() {
 				if (extraData->countDelta > 0) {
 					ExtraContainerChanges::EquipItemData state;
 					extraData->GetEquipItemData(state, form->formID, baseCount);
-					if(state.isTypeWorn || state.isTypeWornLeft || state.isItemWorn || state.isItemWornLeft)
-						playerArmorWeight += ((TESObjectARMO*)form)->weight.weight;
+					if (state.isTypeWorn || state.isTypeWornLeft || state.isItemWorn || state.isItemWornLeft)
+						if (extraData->type->GetFormType() == FormType::kFormType_Armor)
+							playerArmorWeight += ((TESObjectARMO*)form)->weight.weight;
+						else if (extraData->type->GetFormType() == FormType::kFormType_Ammo)
+							equippedAmmo = DYNAMIC_CAST(extraData->type, TESForm, TESAmmo);
 				}
 			}
 			++it;
@@ -77,7 +84,7 @@ EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESE
 			&& !((Actor*)evn->unk_00)->equippingMagicItems[0] && !((Actor*)evn->unk_00)->equippingMagicItems[1])
 			MenuCloseWatcher::RequestAction((Actor*)(evn->unk_00));
 		if (!isInitialized && (*g_thePlayer)->GetNiNode()) {
-			OnFirstLoad(evn);
+			OnFirstLoad();
 		}
 		if (evn->unk_01) {
 			TESForm *equipment = LookupFormByID(evn->unk_01);
@@ -108,7 +115,15 @@ EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESE
 				}
 				//I'm not gonna track down the total armor weight the whole time, but maybe it should at least check if it's negative or something..
 				if (playerArmorWeight < 0)
-					ScanArmorWeight();
+					ScanEquippedItems();
+			}
+			else if (equipment && equipment->GetFormType() == FormType::kFormType_Ammo) {
+				if (evn->unk_03 & 0x10000) {
+					equippedAmmo = DYNAMIC_CAST(equipment, TESForm, TESAmmo);
+				}
+				else {
+					equippedAmmo = nullptr;
+				}
 			}
 		}
 	}
