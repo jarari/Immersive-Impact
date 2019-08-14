@@ -10,7 +10,8 @@
 #include <math.h>
 #include <algorithm>
 #include <SKSE\PapyrusGame.h>
-#include <immersive_impact\AimHelperThread.h>
+#include "AimHelperThread.h"
+#include "BingleEventInvoker.h"
 #include <SKSE\GameRTTI.h>
 
 typedef UInt32(*_LookupActorValueByName)(const char * name);
@@ -502,22 +503,34 @@ void ActorModifier::UnlockAim() {
 }
 
 //A cleaner way to modify actor values.
+//Stores UInt32 id of the actor value to the map for quick access.
+std::map<char*, UInt32> avPtrs;
+UInt32 GetActorValuePointerFromMap(char* AVname) {
+	std::map<char*, UInt32>::iterator it = avPtrs.find(AVname);
+	if (it != avPtrs.end()) {
+		return it->second;
+	}
+	UInt32 avPtr = LookupActorValueByName(AVname);
+	avPtrs[AVname] = avPtr;
+	return avPtr;
+}
+
 void ActorModifier::ModifyAV(Actor * a, char *AVname, float v) {
-	UInt32 AVPtr = LookupActorValueByName(AVname);
+	UInt32 AVPtr = GetActorValuePointerFromMap(AVname);
 	a->actorValueOwner.SetBase(AVPtr, v);
 }
 
 void ActorModifier::SetCurrentAV(Actor * a, char *AVname, float v) {
-	UInt32 AVPtr = LookupActorValueByName(AVname);
+	UInt32 AVPtr = GetActorValuePointerFromMap(AVname);
 	a->actorValueOwner.SetCurrent(AVPtr, v);
 }
 
 float ActorModifier::GetAV(Actor * a, char *AVname) {
-	UInt32 AVPtr = LookupActorValueByName(AVname);
+	UInt32 AVPtr = GetActorValuePointerFromMap(AVname);
 	return a->actorValueOwner.GetCurrent(AVPtr);
 }
 
 float ActorModifier::GetAVMax(Actor * a, char *AVname) {
-	UInt32 AVPtr = LookupActorValueByName(AVname);
+	UInt32 AVPtr = GetActorValuePointerFromMap(AVname);
 	return a->actorValueOwner.GetMaximum(AVPtr);
 }

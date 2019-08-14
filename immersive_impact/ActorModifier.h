@@ -25,6 +25,7 @@ public:
 };
 class ActorModifier {
 public:
+	static std::map<char*, UInt32> avPtrs;
 	static void EnableRestraint(bool b);
 	static void RestrainMovement(Actor *a, bool restrain);
 	static void RestrainView(Actor *a, bool restrain);
