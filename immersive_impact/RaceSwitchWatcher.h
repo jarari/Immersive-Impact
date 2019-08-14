@@ -14,7 +14,7 @@ public:
 		_MESSAGE((className + std::string(" instance created.")).c_str());
 	}
 
-	RaceSwitchWatcher *GetInstance() {
+	static RaceSwitchWatcher *GetInstance() {
 		return instance;
 	}
 	virtual ~RaceSwitchWatcher();

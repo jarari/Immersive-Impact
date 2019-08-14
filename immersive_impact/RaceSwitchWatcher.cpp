@@ -2,7 +2,7 @@
 #include "EquipWatcher.h"
 
 RaceSwitchWatcher *RaceSwitchWatcher::instance = nullptr;
-std::string RaceSwitchWatcher::className = "WatcherTemplate";
+std::string RaceSwitchWatcher::className = "RaceSwitchWatcher";
 
 void RaceSwitchWatcher::InitHook() {
 	if (instance)
@@ -13,7 +13,6 @@ void RaceSwitchWatcher::InitHook() {
 }
 
 EventResult RaceSwitchWatcher::ReceiveEvent(TESSwitchRaceCompleteEvent *evn, EventDispatcher<TESSwitchRaceCompleteEvent>* src) {
-	PRINT_HEX((UInt32)evn);
 	if (evn->actor == (Actor*)(*g_thePlayer)) {
 		EquipWatcher::ResetHook();
 	}
