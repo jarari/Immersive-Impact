@@ -212,7 +212,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	ae->duration = ae->elapsed;
 
 	if (evn->flags.blocked && !evn->flags.powerAttack && !evn->flags.bash) {
-		deflectAttack(target, ae);
+		deflectAttack(target, ae, false);
 		return kEvent_Continue;
 	}
 
