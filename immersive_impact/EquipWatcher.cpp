@@ -31,9 +31,14 @@ void EquipWatcher::InitHook() {
 void EquipWatcher::ResetHook() {
 	isInitialized = false;
 	isTwoHanded = false;
+	UIManager* ui = UIManager::GetSingleton();
+	CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Close, nullptr);
+	CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
 }
 
 void EquipWatcher::OnFirstLoad() {
+	if (!((Actor*)(*g_thePlayer))->GetNiNode())
+		return;
 	isInitialized = true;
 	ConfigHandler::LoadConfig(0);
 	TESForm* rweap = ((Actor*)(*g_thePlayer))->GetEquippedObject(false);
