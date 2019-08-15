@@ -9,16 +9,15 @@
 #include <random>
 #define EVENT TESHitEvent
 
-class BingleHitWaitNextFrame : public UIDelegate {
+class BingleHitWaitNextFrame : public TaskDelegate {
 public:
 	static BingleHitWaitNextFrame* Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, float bowDivider);
 	virtual void Run();
 	virtual void Dispose();
-
-private:
-	ActiveEffect* ae;
 	Actor* attacker;
 	Actor* target;
+private:
+	ActiveEffect* ae;
 	TESHitEvent::Flags flags;
 	float bowDivider;
 };
@@ -26,8 +25,11 @@ private:
 class HitFeedbackHelper : public IMenu {
 protected:
 	static HitFeedbackHelper* instance;
+	BingleHitWaitNextFrame* task = nullptr;
 	bool invoked = false;
 	int frameCounter = 0;
+	Actor* t = nullptr;
+	Actor* a = nullptr;
 public:
 	HitFeedbackHelper();
 	virtual ~HitFeedbackHelper();
@@ -36,11 +38,15 @@ public:
 		return instance;
 	}
 
+	void SetInstance(HitFeedbackHelper* _i) {
+		instance = _i;
+	}
+
 	static void Register();
 
-	static void ForceProcessCommands();
+	void RunTask();
 
-	void InvokeAddTask(UIDelegate* task);
+	void SetTask(BingleHitWaitNextFrame* t);
 
 	virtual void Render();
 };

@@ -21,13 +21,11 @@
 using std::vector;
 using std::pair;
 
-IThreadSafeBasicMemPool<BingleHitWaitNextFrame, 64>	s_bingleHitWaitNextFrameDelegatePool;
+IThreadSafeBasicMemPool<BingleHitWaitNextFrame, 16>	s_bingleHitWaitNextFrameDelegatePool;
 
 HitFeedbackHelper* HitFeedbackHelper::instance = nullptr;
 
 HitFeedbackHelper::HitFeedbackHelper() {
-	if (instance)
-		delete(instance);
 	instance = this;
 	InitMovie();
 	unk0C = 0x2;
@@ -43,27 +41,31 @@ void HitFeedbackHelper::Register() {
 	MenuManager* mm = MenuManager::GetSingleton();
 	if (!mm)
 		return;
-	mm->Register("HitFeedbackHelper", []()->IMenu * { return new HitFeedbackHelper; });
+	mm->Register("HitFeedbackHelper", []()->IMenu * { 
+		HitFeedbackHelper* helper = new HitFeedbackHelper();
+		helper->SetInstance(helper);
+		return helper;
+		});
 	_MESSAGE("HitFeedbackHelper registered");
 }
 
-void HitFeedbackHelper::ForceProcessCommands() {
-	if (!instance)
-		return;
-	if (instance->invoked) {
-		UIManager* ui = UIManager::GetSingleton();
-		ui->ProcessCommands();
-		instance->invoked = false;
+void HitFeedbackHelper::RunTask() {
+	if (invoked) {
+		invoked = false;
+		if (task) {
+			if (task->target == t && task->attacker == a) {
+				task->Run();
+			}
+			task->Dispose();
+			task = nullptr;
+		}
 	}
 }
 
-void HitFeedbackHelper::InvokeAddTask(UIDelegate* task) {
-	if (!instance)
-		instance = this;
-	if (invoked) {
-		instance->ForceProcessCommands();
-	}
-	TaskInterface::AddUITask(task);
+void HitFeedbackHelper::SetTask(BingleHitWaitNextFrame* _task) {
+	if (task)
+		task->Dispose();
+	task = _task;
 	invoked = true;
 }
 
@@ -91,7 +93,20 @@ static void __declspec(naked) Hook_InterceptCalculatedDamage(void) {
 		fstp	dword ptr[esp]
 		movss	xmm0, [esp]
 		movss	[HitFeedback::lastDamage], xmm0
-		call	[HitFeedbackHelper::ForceProcessCommands]
+		push	eax
+		call	[HitFeedbackHelper::GetInstance]
+		cmp		eax, 0
+		je		instance_null
+		mov		dword ptr[eax + 0x28], esi
+		mov		dword ptr[eax + 0x2C], edi
+		push	ecx
+		mov		ecx, eax
+		call	[HitFeedbackHelper::RunTask]
+		pop		ecx
+		pop		eax
+	}
+	instance_null:
+	__asm {
 		push	0x18
 		jmp		[returnAddr]
 	}
@@ -107,13 +122,17 @@ void HitFeedback::InitHook() {
 	_MESSAGE((className + std::string(" added to the sink.")).c_str());
 }
 
+void RegisterHelper() {
+	HitFeedbackHelper::Register();
+	UIManager* ui = UIManager::GetSingleton();
+	CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
+	CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Close, nullptr);
+}
+
 void HitFeedback::ResetHook() {
 	storedActiveEffects.clear();
 	if (!HitFeedbackHelper::GetInstance()) {
-		HitFeedbackHelper::Register();
-		UIManager* ui = UIManager::GetSingleton();
-		CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
-		CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Close, nullptr);
+		RegisterHelper();
 	}
 }
 
@@ -219,7 +238,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 
 	//Dump(evn, 256);
 	TESObjectWEAP* wep = (TESObjectWEAP*)LookupFormByID(evn->sourceFormID);
-	if (wep == nullptr)
+	if (wep == nullptr || wep->formType != kFormType_Weapon)
 		return kEvent_Continue;
 	float bowDivider = 1.0f;
 	if ((wep->type() == TESObjectWEAP::GameData::kType_Bow
@@ -270,7 +289,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 		HitFeedbackHelper* helper = HitFeedbackHelper::GetInstance();
 		if (cmd) {
 			target->animGraphHolder.SendAnimationEvent("staggerStop");
-			helper->InvokeAddTask(cmd);
+			helper->SetTask(cmd);
 		}
 	}
 	return kEvent_Continue;
@@ -290,13 +309,13 @@ BingleHitWaitNextFrame* BingleHitWaitNextFrame::Create(Actor* target, Actor* att
 }
 
 void BingleHitWaitNextFrame::Run(){
-	if (attacker == nullptr || 
-		attacker->flags2.killMove || 
-		attacker->IsDead(1) || 
-		target == nullptr || 
-		target->flags2.killMove || 
+	if (!attacker ||
+		attacker->flags2.killMove ||
+		attacker->IsDead(1) ||
+		!target ||
+		target->flags2.killMove ||
 		target->IsDead(1) ||
-		HitFeedback::lastDamage == 0)
+		HitFeedback::lastDamage > -0.5) 
 		return;
 	float staggerMagnitude = min(max(-HitFeedback::lastDamage / 200.0f, 0.125f) * min(flags.powerAttack + flags.bash + 1.0f, 2.0f), 1) / bowDivider / (ae->magnitude + 1);
 	if (staggerMagnitude <= 0.005f) {
