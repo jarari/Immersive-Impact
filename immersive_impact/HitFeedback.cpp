@@ -16,6 +16,7 @@
 #include "common/IMemPool.h"
 #include <SKSE\PluginManager.h>
 #include <SKSE/ScaleformLoader.h>
+#include <SKSE/ScaleformMovie.h>
 #include <SKSE\SafeWrite.h>
 using std::vector;
 using std::pair;
@@ -45,26 +46,26 @@ void HitFeedbackHelper::Register() {
 	_MESSAGE("HitFeedbackHelper registered");
 }
 
+void HitFeedbackHelper::ForceProcessCommands() {
+	if (!instance)
+		return;
+	if (instance->invoked) {
+		UIManager* ui = UIManager::GetSingleton();
+		ui->ProcessCommands();
+		instance->invoked = false;
+	}
+}
+
 void HitFeedbackHelper::InvokeAddTask(UIDelegate* task) {
 	if (!instance)
 		instance = this;
+	if (invoked)
+		return;
 	TaskInterface::AddUITask(task);
 	invoked = true;
 }
 
 void HitFeedbackHelper::Render(){
-	if (invoked) {
-		if (frameCounter >= 1) {
-			UIManager* ui = UIManager::GetSingleton();
-			if (ui) {
-				ui->ProcessCommands();
-				invoked = false;
-				frameCounter = 0;
-			}
-		}
-		else
-			frameCounter++;
-	}
 	if (!EquipWatcher::isInitialized && *g_thePlayer && (Actor*)(*g_thePlayer)->GetNiNode()) {
 		EquipWatcher::OnFirstLoad();
 	}
@@ -88,6 +89,7 @@ static void __declspec(naked) Hook_InterceptCalculatedDamage(void) {
 		fstp	dword ptr[esp]
 		movss	xmm0, [esp]
 		movss	[HitFeedback::lastDamage], xmm0
+		call	[HitFeedbackHelper::ForceProcessCommands]
 		push	0x18
 		jmp		[returnAddr]
 	}
@@ -109,11 +111,7 @@ void HitFeedback::ResetHook() {
 		HitFeedbackHelper::Register();
 		UIManager* ui = UIManager::GetSingleton();
 		CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
-	}
-	else {
-		UIManager* ui = UIManager::GetSingleton();
 		CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Close, nullptr);
-		CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
 	}
 }
 
@@ -184,11 +182,13 @@ void Dump(void* mem) {
 	}
 }
 
-float staggerResetTime = 3.0f;
+float staggerResetTime = 2.0f;
 float deflectChanceMul = 0.1f;
+std::random_device rd;
 EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	if (!feedbackEnabled)
 		return kEvent_Continue;
+	lastDamage = 0.0f;
 	if (!evn->target || evn->target->formType != kFormType_Character || !evn->caster || evn->caster->formType != kFormType_Character)
 		return kEvent_Continue;
 	Character* target = (Character*)evn->target;
@@ -205,8 +205,9 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 
 	if (ae == nullptr)
 		return kEvent_Continue;
+	ae->duration = ae->elapsed;
 
-	if (evn->flags.blocked) {
+	if (evn->flags.blocked && !evn->flags.powerAttack && !evn->flags.bash) {
 		deflectAttack(target, ae);
 		return kEvent_Continue;
 	}
@@ -225,6 +226,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 		|| wep->type() == TESObjectWEAP::GameData::kType_CBow)
 		&& !evn->flags.bash) {
 		bowDivider = 4.0f;
+		ae->duration = ae->elapsed - 1.0f;
 	}
 	TESContainer* container = DYNAMIC_CAST(target->baseForm, TESForm, TESContainer);
 	ExtraContainerChanges* pXContainerChanges = static_cast<ExtraContainerChanges*>(target->extraData.GetByType(kExtraData_ContainerChanges));
@@ -251,16 +253,19 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 		++it;
 	}
 	armorValue /= 100.0f;
-	float deflectChance = armorValue * deflectChanceMul;
-	srand(time(NULL));
-	float chance = rand() % 100;
+	float deflectChance = min(armorValue * deflectChanceMul, 50.0f);
+	std::mt19937 e{ rd() }; // or std::default_random_engine e{rd()};
+	std::uniform_int_distribution<int> dist{ 0, 99 };
+	float chance = dist(e);
 	if (chance < deflectChance) {
 		deflectAttack(target, ae);
+		evn->flags.blocked = true;
+		_MESSAGE("chance %f defchance %f", chance, deflectChance);
 		return kEvent_Continue;
 	}
 	else {
 		//float damage = (damageBase + arrowDamage) * (1.0f - (armorValue * 0.12f + 0.03f * armorPieces));
-		BingleHitWaitNextFrame* cmd = BingleHitWaitNextFrame::Create(target, attacker, ae, evn->flags, bowDivider, *((DWORD*)((char*)evn + 0x18)));
+		BingleHitWaitNextFrame* cmd = BingleHitWaitNextFrame::Create(target, attacker, ae, evn->flags, bowDivider);
 		HitFeedbackHelper* helper = HitFeedbackHelper::GetInstance();
 		if (cmd) {
 			helper->InvokeAddTask(cmd);
@@ -269,7 +274,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	return kEvent_Continue;
 }
 
-BingleHitWaitNextFrame* BingleHitWaitNextFrame::Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, float bowDivider, DWORD addr){
+BingleHitWaitNextFrame* BingleHitWaitNextFrame::Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, float bowDivider){
 	BingleHitWaitNextFrame* cmd = s_bingleHitWaitNextFrameDelegatePool.Allocate();
 	if (cmd)
 	{
@@ -278,17 +283,22 @@ BingleHitWaitNextFrame* BingleHitWaitNextFrame::Create(Actor* target, Actor* att
 		cmd->ae = ae;
 		cmd->flags = flags;
 		cmd->bowDivider = bowDivider;
-		cmd->addr = addr;
 	}
 	return cmd;
 }
 
 void BingleHitWaitNextFrame::Run(){
-	if (attacker == nullptr || attacker->flags2.killMove || attacker->IsDead(1) || target == nullptr || target->flags2.killMove || target->IsDead(1))
+	if (attacker == nullptr || 
+		attacker->flags2.killMove || 
+		attacker->IsDead(1) || 
+		target == nullptr || 
+		target->flags2.killMove || 
+		target->IsDead(1) ||
+		HitFeedback::lastDamage == 0)
 		return;
 	_MESSAGE("dmg : %f", HitFeedback::lastDamage);
-	float staggerMagnitude = min(max(-HitFeedback::lastDamage / 200.0f, 0.05f) * min(flags.powerAttack + flags.bash + 1.0f, 2.0f), 1) / bowDivider / (ae->magnitude + 1);
-	if (staggerMagnitude <= 0.003125f) {
+	float staggerMagnitude = min(max(-HitFeedback::lastDamage / 200.0f, 0.125f) * min(flags.powerAttack + flags.bash + 1.0f, 2.0f), 1) / bowDivider / (ae->magnitude + 1);
+	if (staggerMagnitude <= 0.005f) {
 		deflectAttack(target, ae, false);
 		return;
 	}
@@ -299,7 +309,6 @@ void BingleHitWaitNextFrame::Run(){
 		target->animGraphHolder.SendAnimationEvent("staggerStart");
 	}
 	ae->magnitude += 3;
-	ae->duration = ae->elapsed;
 }
 
 void BingleHitWaitNextFrame::Dispose(){

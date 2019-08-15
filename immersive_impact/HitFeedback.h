@@ -6,16 +6,16 @@
 #include <SKSE/GameThreads.h>
 #include <SKSE/PluginAPI.h>
 #include <SKSE/Hooks_UI.h>
+#include <random>
 #define EVENT TESHitEvent
 
 class BingleHitWaitNextFrame : public UIDelegate {
 public:
-	static BingleHitWaitNextFrame* Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, float bowDivider, DWORD addr);
+	static BingleHitWaitNextFrame* Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, float bowDivider);
 	virtual void Run();
 	virtual void Dispose();
 
 private:
-	DWORD addr;
 	ActiveEffect* ae;
 	Actor* attacker;
 	Actor* target;
@@ -37,6 +37,8 @@ public:
 	}
 
 	static void Register();
+
+	static void ForceProcessCommands();
 
 	void InvokeAddTask(UIDelegate* task);
 
