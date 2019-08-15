@@ -30,7 +30,8 @@ HitFeedbackHelper::HitFeedbackHelper() {
 		delete(instance);
 	instance = this;
 	InitMovie();
-	flags = 0x2 | 0x800;
+	unk0C = 0x2;
+	flags = 0x2 | 0x800 | 0x1000;
 	_MESSAGE("HitFeedbackHelper created");
 }
 
