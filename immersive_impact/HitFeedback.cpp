@@ -59,8 +59,9 @@ void HitFeedbackHelper::ForceProcessCommands() {
 void HitFeedbackHelper::InvokeAddTask(UIDelegate* task) {
 	if (!instance)
 		instance = this;
-	if (invoked)
-		return;
+	if (invoked) {
+		instance->ForceProcessCommands();
+	}
 	TaskInterface::AddUITask(task);
 	invoked = true;
 }
@@ -165,12 +166,12 @@ bool canKnockdown(Actor* actor) {
 	return ((int)(actor->race->data.raceFlags & TESRace::kRace_NoKnockdowns) - TESRace::kRace_NoKnockdowns);
 }
 
-void Dump(void* mem) {
+void Dump(void* mem, unsigned int size) {
 	char* p = static_cast<char*>(mem);
 	unsigned char* up = (unsigned char*)p;
 	std::stringstream stream;
 	int row = 0;
-	for (unsigned int i = 0; i < 512; i++){
+	for (unsigned int i = 0; i < size; i++){
 		stream << std::setfill('0') << std::setw(2) << std::hex << (int)up[i] << " ";
 		if (i % 4 == 3) {
 			stream << "\t0x" << std::setfill('0') << std::setw(2) << std::hex << (int)up[i] << (int)up[i - 1] << (int)up[i - 2] << (int)up[i - 3];
@@ -205,6 +206,9 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 
 	if (ae == nullptr)
 		return kEvent_Continue;
+
+	if (ae->elapsed - ae->duration > staggerResetTime)
+		ae->magnitude = 0;
 	ae->duration = ae->elapsed;
 
 	if (evn->flags.blocked && !evn->flags.powerAttack && !evn->flags.bash) {
@@ -212,10 +216,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 		return kEvent_Continue;
 	}
 
-	if (ae->elapsed - ae->duration > staggerResetTime)
-		ae->magnitude = 0;
-
-	//Dump(evn);
+	//Dump(evn, 256);
 	TESObjectWEAP* wep = (TESObjectWEAP*)LookupFormByID(evn->sourceFormID);
 	if (wep == nullptr)
 		return kEvent_Continue;
@@ -260,7 +261,6 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	if (chance < deflectChance) {
 		deflectAttack(target, ae);
 		evn->flags.blocked = true;
-		_MESSAGE("chance %f defchance %f", chance, deflectChance);
 		return kEvent_Continue;
 	}
 	else {
@@ -268,6 +268,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 		BingleHitWaitNextFrame* cmd = BingleHitWaitNextFrame::Create(target, attacker, ae, evn->flags, bowDivider);
 		HitFeedbackHelper* helper = HitFeedbackHelper::GetInstance();
 		if (cmd) {
+			target->animGraphHolder.SendAnimationEvent("staggerStop");
 			helper->InvokeAddTask(cmd);
 		}
 	}
@@ -296,14 +297,12 @@ void BingleHitWaitNextFrame::Run(){
 		target->IsDead(1) ||
 		HitFeedback::lastDamage == 0)
 		return;
-	_MESSAGE("dmg : %f", HitFeedback::lastDamage);
 	float staggerMagnitude = min(max(-HitFeedback::lastDamage / 200.0f, 0.125f) * min(flags.powerAttack + flags.bash + 1.0f, 2.0f), 1) / bowDivider / (ae->magnitude + 1);
 	if (staggerMagnitude <= 0.005f) {
 		deflectAttack(target, ae, false);
 		return;
 	}
 	else {
-		target->animGraphHolder.SendAnimationEvent("staggerStop");
 		CALL_MEMBER_FN(&(target->animGraphHolder), SetAnimationVariableFloat)(BSFixedString("staggerDirection"), 0.5f - (target->rot.z - attacker->rot.z) / M_PI);
 		CALL_MEMBER_FN(&(target->animGraphHolder), SetAnimationVariableFloat)(BSFixedString("staggerMagnitude"), staggerMagnitude);
 		target->animGraphHolder.SendAnimationEvent("staggerStart");
