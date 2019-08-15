@@ -8,6 +8,7 @@
 #include "ActorModifier.h"
 #include "ConfigHandler.h"
 #include "EquipWatcher.h"
+#include "HitFeedback.h"
 
 namespace BingleImmersiveImpact {
 	float speedValues[ConfigType::EndOfEnumMarker];
@@ -212,6 +213,9 @@ namespace BingleImmersiveImpact {
 		}
 		else if (configtype == ConfigType::ChargeMul) {
 			chargeMul = v;
+		}
+		else if (configtype == ConfigType::HitFeedback) {
+			HitFeedback::EnableFeedback(v);
 		}
 		ConfigHandler::SetConfig(formId, (ConfigType)configtype, v);
 	}
