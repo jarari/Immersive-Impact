@@ -178,8 +178,8 @@ ActiveEffect* GetActiveEffectFromActor(Actor* actor) {
 void deflectAttack(Actor* actor, ActiveEffect* ae, bool playSound = true) {
 	//ae->magnitude = 0;
 	//ae->duration = ae->elapsed;
+	actor->animGraphHolder.SendAnimationEvent("staggerStop");
 	if (actor != *g_thePlayer) {
-		actor->animGraphHolder.SendAnimationEvent("staggerStop");
 		actor->animGraphHolder.SendAnimationEvent("attackStart");
 	}
 	if(playSound)
