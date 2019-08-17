@@ -46,9 +46,9 @@ EventResult MenuCloseWatcher::ReceiveEvent(MenuOpenCloseEvent * evn, EventDispat
 	}
 	else if (EquipWatcher::isInitialized) {
 		UIStringHolder* uistr = UIStringHolder::GetSingleton();
-		if (uistr && (evn->menuName == uistr->mainMenu || evn->menuName == uistr->loadingMenu) && evn->opening) {
+		if (uistr && evn->menuName == uistr->mainMenu && !evn->opening) {
 			EquipWatcher::ResetHook();
-			_MESSAGE("Main menu or loading menu opening");
+			_MESSAGE("Main menu opening");
 		}
 	}
 	return kEvent_Continue;

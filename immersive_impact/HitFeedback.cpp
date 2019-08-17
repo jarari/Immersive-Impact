@@ -73,6 +73,11 @@ void HitFeedbackHelper::Render(){
 	if (!EquipWatcher::isInitialized && *g_thePlayer && (Actor*)(*g_thePlayer)->GetNiNode()) {
 		EquipWatcher::OnFirstLoad();
 	}
+	else if (EquipWatcher::isInitialized) {
+		UIManager* ui = UIManager::GetSingleton();
+		CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Close, nullptr);
+	}
+	IMenu::Render();
 }
 
 HitFeedback* HitFeedback::instance = nullptr;
@@ -125,7 +130,6 @@ void HitFeedback::InitHook() {
 void RegisterHelper() {
 	HitFeedbackHelper::Register();
 	UIManager* ui = UIManager::GetSingleton();
-	CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
 	CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Close, nullptr);
 }
 
@@ -247,7 +251,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 		|| wep->type() == TESObjectWEAP::GameData::kType_CBow)
 		&& !evn->flags.bash) {
 		bowDivider = 4.0f;
-		ae->duration = ae->elapsed - 1.0f;
+		ae->duration = ae->elapsed + 1.0f;
 	}
 	TESContainer* container = DYNAMIC_CAST(target->baseForm, TESForm, TESContainer);
 	ExtraContainerChanges* pXContainerChanges = static_cast<ExtraContainerChanges*>(target->extraData.GetByType(kExtraData_ContainerChanges));
@@ -288,7 +292,6 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 		BingleHitWaitNextFrame* cmd = BingleHitWaitNextFrame::Create(target, attacker, ae, evn->flags, bowDivider);
 		HitFeedbackHelper* helper = HitFeedbackHelper::GetInstance();
 		if (cmd) {
-			target->animGraphHolder.SendAnimationEvent("staggerStop");
 			helper->SetTask(cmd);
 		}
 	}
