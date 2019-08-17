@@ -61,7 +61,6 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 	}
 	char formIdstr[32];
 	sprintf_s(formIdstr, "%lu", formId);
-	_MESSAGE("Loading ini");
 	if (formId == 0) {
 		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_Pre), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Pre)), NULL, NULL)));
 		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_Swing1h), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Swing1h)), NULL, NULL)));
@@ -88,9 +87,7 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 		BingleEventInvoker::SyncConfig(CTYPE(HitFeedback), std::stof(ini.GetValue("General", CNAME(CTYPE(HitFeedback)), "0", NULL)));
 	}
 	else{
-		_MESSAGE("Config existence check for %s", formIdstr);
 		if (Exists(formIdstr)) {
-			_MESSAGE("Exists");
 			BingleImmersiveImpact::SetCustomized(slot, true);
 			if (slot == 0) {
 				BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_CustomL_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomL_Swing)), NULL, NULL)));
@@ -100,7 +97,6 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 				BingleEventInvoker::SyncConfig(CTYPE(Speed_CustomR_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomR_Swing)), NULL, NULL)));
 			}
 		} else {
-			_MESSAGE("Does not exist");
 			float def = 0;
 			if (weapontype == 5 || weapontype == 6) {
 				def = BingleImmersiveImpact::GetDefault(CTYPE(Speed_Swing2h));
