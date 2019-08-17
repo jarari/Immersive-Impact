@@ -10,6 +10,7 @@
 #include <SKSE\PapyrusObjectReference.cpp>
 #include "HitFeedback.h"
 #include <SKSE/PapyrusActor.h>
+#include <immersive_impact\BingleEventInvoker.h>
 
 EquipWatcher *EquipWatcher::instance = nullptr;
 bool EquipWatcher::isInitialized = false;
@@ -29,11 +30,13 @@ void EquipWatcher::InitHook() {
 }
 
 void EquipWatcher::ResetHook() {
+	_MESSAGE("EquipWatcher reset");
 	isInitialized = false;
 	isTwoHanded = false;
+	MenuManager* mm = MenuManager::GetSingleton();
 	UIManager* ui = UIManager::GetSingleton();
-	CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Close, nullptr);
-	CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
+	if(mm && !mm->IsMenuOpen(&BSFixedString("HitFeedbackHelper")) && ui)
+		CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
 }
 
 void EquipWatcher::OnFirstLoad() {
@@ -81,18 +84,31 @@ void EquipWatcher::ScanEquippedItems() {
 			++it;
 		}
 	}
+	if (!player->GetEquippedObject(true) && !player->GetEquippedObject(false)
+		&& !player->equippingMagicItems[0] && !player->equippingMagicItems[1]) {
+		BingleEventInvoker::EquipFist(player);
+	}
 }
 
 EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESEquipEvent>* src) {
 	if (evn->unk_00 == (UInt32)(*g_thePlayer)) {
-		if (!((Actor*)(evn->unk_00))->GetEquippedObject(true) && !((Actor*)(evn->unk_00))->GetEquippedObject(false)
-			&& !((Actor*)evn->unk_00)->equippingMagicItems[0] && !((Actor*)evn->unk_00)->equippingMagicItems[1])
-			MenuCloseWatcher::RequestAction((Actor*)(evn->unk_00));
 		if (!isInitialized && (*g_thePlayer)->GetNiNode()) {
 			OnFirstLoad();
 		}
 		if (evn->unk_01) {
 			TESForm *equipment = LookupFormByID(evn->unk_01);
+			if (equipment && equipment->formID == 0x1F4)
+				return kEvent_Continue;
+
+			PRINT_HEX(evn->unk_03);
+			if (!(evn->unk_03 & 0x10000)
+				&& !((Actor*)(evn->unk_00))->GetEquippedObject(true) && !((Actor*)(evn->unk_00))->GetEquippedObject(false)
+				&& !((Actor*)evn->unk_00)->equippingMagicItems[0] && !((Actor*)evn->unk_00)->equippingMagicItems[1]) {
+				//MenuCloseWatcher::RequestAction((Actor*)(evn->unk_00));
+				BingleEventInvoker::EquipFist((Actor*)evn->unk_00);
+				_MESSAGE("FIST");
+			}
+			
 			if (equipment && equipment->GetFormType() == FormType::kFormType_Weapon) {
 				if (evn->unk_03 & 0x10000) {
 					if (((Actor*)(evn->unk_00))->GetEquippedObject(false) == ((Actor*)(evn->unk_00))->GetEquippedObject(false))

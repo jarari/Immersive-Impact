@@ -51,7 +51,11 @@ Event OnInitializeRequested(int dummy)
 EndEvent
 
 Event OnFistRequested(ObjectReference _ac)
-	(_ac as Actor).EquipItem(Unarmed, false, true)
+	Utility.Wait(0.1)
+	Actor ac = _ac as Actor
+	if(ac.GetEquippedItemType(0) + ac.GetEquippedItemType(1) == 0)
+		ac.EquipItem(Unarmed, false, true)
+	endif
 EndEvent
 
 Event OnNotificationRequest(string content)
