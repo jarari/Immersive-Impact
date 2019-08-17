@@ -3,6 +3,7 @@
 #include "SKSE/Utilities.h"
 #include "ActorModifier.h"
 #include "Papyrus.h"
+#include "BingleEventInvoker.h"
 
 //This class is used to free the player from restraints if his attack got canceled.
 class WeaponSwingEventSink : public BSTEventSink<WeaponAttack::Event> {
@@ -23,6 +24,7 @@ UInt8 CustomHandlerFunctor<Actor, UInt32>::ProcessAction(Actor * actor, UInt32 u
 	ActorModifier::RestrainMovement(actor, false);
 	//ActorModifier::RestrainView(actor, false);
 	ActorModifier::UnlockAim();
+	BingleEventInvoker::StopTranslation();
 	ActorModifier::ModifyAV(actor, "WeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Pre] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Offset]);
 	ActorModifier::ModifyAV(actor, "LeftWeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Pre] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_LeftOffset]);
 	return CALL_MEMBER_FN(static_cast<T*>(this), Process_Origin)(actor, unk04);
