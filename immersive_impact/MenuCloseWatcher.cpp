@@ -2,11 +2,15 @@
 #include "SKSE/PapyrusActor.h"
 #include "BingleEventInvoker.h"
 #include "SKSE/GameMenus.h"
-#include <immersive_impact\EquipWatcher.h>
+#include "EquipWatcher.h"
+#include "HitFeedback.h"
 
 MenuCloseWatcher *MenuCloseWatcher::instance = nullptr;
 bool MenuCloseWatcher::actionRequested = false;
 Actor *MenuCloseWatcher::actionTarget = nullptr;
+
+bool helperWasOpen = false;
+BSFixedString closeCalledBy;
 
 MenuCloseWatcher::~MenuCloseWatcher() {
 }
@@ -30,25 +34,21 @@ void MenuCloseWatcher::InitHook() {
 void MenuCloseWatcher::ResetHook() {
 	actionRequested = false;
 	actionTarget = nullptr;
+	helperWasOpen = false;
 }
 
 EventResult MenuCloseWatcher::ReceiveEvent(MenuOpenCloseEvent * evn, EventDispatcher<MenuOpenCloseEvent>* src) {
-	if (actionRequested && !evn->opening) {
-		actionRequested = false;
-		_MESSAGE("Action requested, and the user is closing the menu...");
-		if (!actionTarget || !actionTarget->GetNiNode())
-			return kEvent_Continue;
-		if (!actionTarget->GetEquippedObject(false) && !actionTarget->GetEquippedObject(true)
-			&& !actionTarget->equippingMagicItems[0] && !actionTarget->equippingMagicItems[1]) {
-			_MESSAGE("...and he's unarmed. Force equipping the hand weapon.");
-			BingleEventInvoker::EquipFist(actionTarget);
-		}
-	}
-	else if (EquipWatcher::isInitialized) {
-		UIStringHolder* uistr = UIStringHolder::GetSingleton();
-		if (uistr && evn->menuName == uistr->mainMenu && !evn->opening) {
+	MenuManager* mm = MenuManager::GetSingleton();
+	UIManager* ui = UIManager::GetSingleton();
+	UIStringHolder* uistr = UIStringHolder::GetSingleton();
+	if (uistr && evn->menuName == uistr->mainMenu && !evn->opening) {
+		HitFeedback::ResetHook();
+		g_mainScriptRegs.Clear();
+		MenuCloseWatcher::ResetHook();
+		if (mm && !mm->IsMenuOpen(&BSFixedString("HitFeedbackHelper")) && ui)
+			CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
+		if (EquipWatcher::isInitialized) {
 			EquipWatcher::ResetHook();
-			_MESSAGE("Main menu opening");
 		}
 	}
 	return kEvent_Continue;
