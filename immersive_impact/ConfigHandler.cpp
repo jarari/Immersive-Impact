@@ -18,32 +18,47 @@ bool FileExists(const char* path) {
 	return (stat(path, &buffer) == 0);
 }
 
+using namespace BingleImmersiveImpact;
 ConfigHandler::ConfigHandler() {
 	if (instance)
 		delete(instance);
 	instance = this;
 	if (!FileExists(filepath)) {
 		char f2c[128];
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(Speed_Pre)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(Speed_Pre)));
 		ini.SetValue("General", "Pre", f2c);
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(Speed_Swing1h)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(Speed_Swing1h)));
 		ini.SetValue("General", "Swing1h", f2c);
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(Speed_Swing2h)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(Speed_Swing2h)));
 		ini.SetValue("General", "Swing2h", f2c);
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(Speed_SwingDag)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(Speed_SwingDag)));
 		ini.SetValue("General", "SwingDag", f2c);
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(Speed_SwingFist)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(Speed_SwingFist)));
 		ini.SetValue("General", "SwingFist", f2c);
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(Speed_Post)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(Speed_Post)));
 		ini.SetValue("General", "Post", f2c);
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(RestrainMovement)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(RestrainMovement)));
 		ini.SetValue("General", "RestrainMovement", f2c);
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(AimHelper)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(AimHelper)));
 		ini.SetValue("General", "AimHelper", f2c);
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(ChargeMul)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(ChargeMul)));
 		ini.SetValue("General", "ChargeMul", f2c);
-		sprintf_s(f2c, "%f", BingleImmersiveImpact::GetDefault(CTYPE(HitFeedback)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(HitFeedback)));
 		ini.SetValue("General", "HitFeedback", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(SpeedAdjustment)));
+		ini.SetValue("General", "SpeedAdjustment", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(DeflectChanceMul)));
+		ini.SetValue("General", "DeflectChanceMul", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(DeflectChanceMax)));
+		ini.SetValue("General", "DeflectChanceMax", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(StaggerResetTime)));
+		ini.SetValue("General", "StaggerResetTime", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(StaggerLimit)));
+		ini.SetValue("General", "StaggerLimit", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(StaggerDamageMax)));
+		ini.SetValue("General", "StaggerDamageMax", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(StaggerAny)));
+		ini.SetValue("General", "StaggerAny", f2c);
 		ini.SaveFile(filepath, false);
 	}
 	SI_Error error = ini.LoadFile(filepath);
@@ -62,35 +77,128 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 	char formIdstr[32];
 	sprintf_s(formIdstr, "%lu", formId);
 	if (formId == 0) {
-		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_Pre), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Pre)), NULL, NULL)));
-		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_Swing1h), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Swing1h)), NULL, NULL)));
-		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_Swing2h), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Swing2h)), NULL, NULL)));
-		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_SwingDag), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_SwingDag)), NULL, NULL)));
-		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_SwingFist), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_SwingFist)), NULL, NULL)));
-		BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_Post), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Post)), NULL, NULL)));
-		BingleEventInvoker::SyncConfig(CTYPE(Speed_Pre), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Pre)), NULL, NULL)));
-		BingleEventInvoker::SyncConfig(CTYPE(Speed_Swing1h), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Swing1h)), NULL, NULL)));
-		BingleEventInvoker::SyncConfig(CTYPE(Speed_Swing2h), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Swing2h)), NULL, NULL)));
-		BingleEventInvoker::SyncConfig(CTYPE(Speed_SwingDag), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_SwingDag)), NULL, NULL)));
-		BingleEventInvoker::SyncConfig(CTYPE(Speed_SwingFist), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_SwingFist)), NULL, NULL)));
-		BingleEventInvoker::SyncConfig(CTYPE(Speed_Post), std::stof(ini.GetValue("General", CNAME(CTYPE(Speed_Post)), NULL, NULL)));
+		ConfigType type = ConfigType::Speed_Swing2h;
+		char defaultbuf[8];
+		float val = 0;
 
-		if (std::stof(ini.GetValue("General", CNAME(CTYPE(RestrainMovement)), "0", NULL)) == 1)
-			ActorModifier::EnableRestraint(true);
-		if (std::stof(ini.GetValue("General", CNAME(CTYPE(AimHelper)), "0", NULL)) == 1)
-			ActorModifier::EnableAimHelper(true);
-		if (std::stof(ini.GetValue("General", CNAME(CTYPE(HitFeedback)), "0", NULL)) == 1)
+		type = CTYPE(SpeedAdjustment);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		if (val == 1)
 			HitFeedback::EnableFeedback(true);
-		BingleEventInvoker::SyncConfig(CTYPE(RestrainMovement), std::stof(ini.GetValue("General", CNAME(CTYPE(RestrainMovement)), "0", NULL)));
-		BingleEventInvoker::SyncConfig(CTYPE(AimHelper), std::stof(ini.GetValue("General", CNAME(CTYPE(AimHelper)), "0", NULL)));
-		BingleEventInvoker::SyncConfig(CTYPE(ChargeMul), std::stof(ini.GetValue("General", CNAME(CTYPE(ChargeMul)), "1.0", NULL)));
-		BingleEventInvoker::SyncConfig(CTYPE(HitFeedback), std::stof(ini.GetValue("General", CNAME(CTYPE(HitFeedback)), "0", NULL)));
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(Speed_Pre);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(Speed_Swing1h);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(Speed_Swing2h);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(Speed_SwingDag);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(Speed_SwingFist);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(Speed_Post);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(RestrainMovement);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		if (val == 1)
+			ActorModifier::EnableRestraint(true);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(AimHelper);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		if (val == 1)
+			ActorModifier::EnableAimHelper(true);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(ChargeMul);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(HitFeedback);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		if (val == 1)
+			HitFeedback::EnableFeedback(true);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(SpeedAdjustment);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		if (val == 1)
+			EnableSpeedAdjustment(true);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(DeflectChanceMul);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(DeflectChanceMax);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(StaggerResetTime);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(StaggerLimit);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(StaggerDamageMax);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(StaggerAny);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
 	}
 	else{
 		if (Exists(formIdstr)) {
-			BingleImmersiveImpact::SetCustomized(slot, true);
+			SetCustomized(slot, true);
 			if (slot == 0) {
-				BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_CustomL_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomL_Swing)), NULL, NULL)));
+				UpdateFromConfig(CTYPE(Speed_CustomL_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomL_Swing)), NULL, NULL)));
 				BingleEventInvoker::SyncConfig(CTYPE(Speed_CustomL_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomL_Swing)), NULL, NULL)));
 			} else {
 				BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_CustomR_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomR_Swing)), NULL, NULL)));
@@ -99,13 +207,13 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 		} else {
 			float def = 0;
 			if (weapontype == 5 || weapontype == 6) {
-				def = BingleImmersiveImpact::GetDefault(CTYPE(Speed_Swing2h));
+				def = GetDefault(CTYPE(Speed_Swing2h));
 			} else if (weapontype == 1 || weapontype == 3 || weapontype == 4) {
-				def = BingleImmersiveImpact::GetDefault(CTYPE(Speed_Swing1h));
+				def = GetDefault(CTYPE(Speed_Swing1h));
 			} else if (weapontype == 2) {
-				def = BingleImmersiveImpact::GetDefault(CTYPE(Speed_SwingDag));
+				def = GetDefault(CTYPE(Speed_SwingDag));
 			} else if (weapontype == 0) {
-				def = BingleImmersiveImpact::GetDefault(CTYPE(Speed_SwingFist));
+				def = GetDefault(CTYPE(Speed_SwingFist));
 			}
 			if(slot == 0){
 				//SetConfig(_type, CTYPE(Speed_CustomL_Swing), def, true);
