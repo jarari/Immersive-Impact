@@ -25,8 +25,8 @@ UInt8 CustomHandlerFunctor<Actor, UInt32>::ProcessAction(Actor * actor, UInt32 u
 	//ActorModifier::RestrainView(actor, false);
 	ActorModifier::UnlockAim();
 	BingleEventInvoker::StopTranslation();
-	ActorModifier::ModifyAV(actor, "WeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Pre] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Offset]);
-	ActorModifier::ModifyAV(actor, "LeftWeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Pre] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_LeftOffset]);
+	ActorModifier::SetCurrentAV(actor, "WeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Pre] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Offset]);
+	ActorModifier::SetCurrentAV(actor, "LeftWeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Pre] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_LeftOffset]);
 	return CALL_MEMBER_FN(static_cast<T*>(this), Process_Origin)(actor, unk04);
 }
 
