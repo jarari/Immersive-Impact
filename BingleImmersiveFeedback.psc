@@ -28,9 +28,6 @@ Function InitializeStuff()
 	bool f = RegisterForAnimationEvent(player, "AttackWinStartLeft")
 	bool g = RegisterForAnimationEvent(player, "AttackWinEnd")
 	bool h = RegisterForAnimationEvent(player, "AttackWinEndLeft")
-	if(a && b && c && d && e && f && g && h)
-		pMCMScript.UpdateIFState(2)
-	endif
 EndFunction
 
 Event OnInit()
@@ -43,6 +40,7 @@ Event OnPlayerLoadGame()
 EndEvent
 
 Event OnSyncConfig(int type, float v)
+	pMCMScript.UpdateIFState(2)
 	pMCMScript.SyncConfig(type, v)
 EndEvent
 
