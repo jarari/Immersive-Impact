@@ -100,13 +100,11 @@ EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESE
 			if (equipment && equipment->formID == 0x1F4)
 				return kEvent_Continue;
 
-			PRINT_HEX(evn->unk_03);
 			if (!(evn->unk_03 & 0x10000)
 				&& !((Actor*)(evn->unk_00))->GetEquippedObject(true) && !((Actor*)(evn->unk_00))->GetEquippedObject(false)
 				&& !((Actor*)evn->unk_00)->equippingMagicItems[0] && !((Actor*)evn->unk_00)->equippingMagicItems[1]) {
 				//MenuCloseWatcher::RequestAction((Actor*)(evn->unk_00));
 				BingleEventInvoker::EquipFist((Actor*)evn->unk_00);
-				_MESSAGE("FIST");
 			}
 			
 			if (equipment && equipment->GetFormType() == FormType::kFormType_Weapon) {
