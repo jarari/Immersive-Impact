@@ -515,7 +515,7 @@ UInt32 GetActorValuePointerFromMap(char* AVname) {
 	return avPtr;
 }
 
-void ActorModifier::ModifyAV(Actor * a, char *AVname, float v) {
+void ActorModifier::SetBaseAV(Actor * a, char *AVname, float v) {
 	UInt32 AVPtr = GetActorValuePointerFromMap(AVname);
 	a->actorValueOwner.SetBase(AVPtr, v);
 }

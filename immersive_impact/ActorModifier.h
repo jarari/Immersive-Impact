@@ -32,7 +32,7 @@ public:
 	static void EnableAimHelper(bool b);
 	static void LockAim(float aimHelperMinDist, float aimHelperMaxDist);
 	static void UnlockAim();
-	static void ModifyAV(Actor* a, char *AVname, float v);
+	static void SetBaseAV(Actor* a, char* AVname, float v);
 	static void SetCurrentAV(Actor* a, char *AVname, float v);
 	static float GetAV(Actor * a, char * AVname);
 	static float GetAVMax(Actor * a, char * AVname);
