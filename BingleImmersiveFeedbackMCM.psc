@@ -19,10 +19,17 @@ int sliderBaseSpeedOID_S
 int sliderCustomLOID_S
 int sliderCustomROID_S
 int sliderChargeMulOID_S
+int sliderDeflectChanceMulOID_S
+int sliderDeflectChanceMaxOID_S
+int sliderStaggerResetTimeOID_S
+int sliderStaggerLimitOID_S
+int sliderStaggerDamageMaxOID_S
 
+int toggleSpeedAdjustmentOID_B
 int toggleRestrainMovementOID_B
 int toggleAimHelperOID_B
 int toggleHitFeedbackOID_B
+int toggleStaggerAnyOID_B
 int resetQuestOID_B
 
 ; Public
@@ -37,9 +44,16 @@ float property valueBaseSpeed auto
 float property valueCustomL auto
 float property valueCustomR auto
 float property valueChargeMul auto
+float property valueDeflectChanceMul auto
+float property valueDeflectChanceMax auto
+float property valueStaggerResetTime auto
+float property valueStaggerLimit auto
+float property valueStaggerDamageMax auto
+bool property valueSpeedAdjustment auto
 bool property valueRestrainMovement auto
 bool property valueAimHelper auto
 bool property valueHitFeedback auto
+bool property valueStaggerAny auto
 int property IFState auto
 
 ; Private
@@ -175,6 +189,28 @@ Function SyncConfig(int type, float v)
 		else
 			valueHitFeedback = false
 		endif
+	elseif(type == 14)
+		if(v == 1)
+			valueSpeedAdjustment = true
+		else
+			valueSpeedAdjustment = false
+		endif
+	elseif(type == 15)
+		valueDeflectChanceMul = v * 100
+	elseif(type == 16)
+		valueDeflectChanceMax = v
+	elseif(type == 17)
+		valueStaggerResetTime = v
+	elseif(type == 18)
+		valueStaggerLimit = v
+	elseif(type == 19)
+		valueStaggerDamageMax = v
+	elseif(type == 20)
+		if(v == 1)
+			valueStaggerAny = true
+		else
+			valueStaggerAny = false
+		endif
 	endif
 EndFunction
 
@@ -184,6 +220,7 @@ event OnPageReset(string a_page)
 	if(a_page == "$BINGLE_PAGE_SETTINGS")
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		AddHeaderOption("$BINGLE_PAGE_SETTINGS_SPEEDMUL")
+		toggleSpeedAdjustmentOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_ENABLESPEED", valueSpeedAdjustment)
 		sliderPreAttackSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_PREATTACK", valuePreAttackSpeed, "x {2}")
 		sliderSwingSpeed1HOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWING1H", valueSwingSpeed1H, "x {2}")
 		sliderSwingSpeedOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_SWING", valueSwingSpeed, "x {2}")
@@ -196,7 +233,13 @@ event OnPageReset(string a_page)
 		toggleAimHelperOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_AIMHELPER", valueAimHelper)
 		sliderChargeMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_CHARGEMUL", valueChargeMul, "x {2}")
 		toggleHitFeedbackOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_HITFEEDBACK", valueHitFeedback)
-		resetQuestOID_B = AddTextOption("", "$BINGLE_PAGE_SETTINGS_RESETQUEST", OPTION_FLAG_NONE)
+		sliderDeflectChanceMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DeflectChanceMul", valueDeflectChanceMul, "{2}% of armor value")
+		sliderDeflectChanceMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DeflectChanceMax", valueDeflectChanceMax, "{2}%")
+		sliderStaggerResetTimeOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_StaggerResetTime", valueStaggerResetTime, "{2} sec(s)")
+		sliderStaggerLimitOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_StaggerLimit", valueStaggerLimit, "{0} hit(s)")
+		sliderStaggerDamageMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_StaggerDamageMax", valueStaggerDamageMax, "{0}")
+		toggleStaggerAnyOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_STAGGERANY", valueStaggerAny)
+		;resetQuestOID_B = AddTextOption("", "$BINGLE_PAGE_SETTINGS_RESETQUEST", OPTION_FLAG_NONE)
 		string stateText = "$BINGLE_IF_NOTINIT"
 		int opt = OPTION_FLAG_DISABLED
 		if(IFState == 1)
@@ -227,6 +270,24 @@ event OnPageReset(string a_page)
 	endif
 endEvent
 
+event OnOptionHighlight(int option)
+	if (option == sliderDeflectChanceMulOID_S)
+		SetInfoText("$BINGLE_PAGE_DESC_DeflectChanceMul")
+	elseif (option == sliderDeflectChanceMaxOID_S)
+		SetInfoText("$BINGLE_PAGE_DESC_DeflectChanceMax")
+	elseif (option == sliderStaggerResetTimeOID_S)
+		SetInfoText("$BINGLE_PAGE_DESC_StaggerResetTime")
+	elseif (option == sliderStaggerLimitOID_S)
+		SetInfoText("$BINGLE_PAGE_DESC_StaggerLimit")
+	elseif (option == sliderStaggerDamageMaxOID_S)
+		SetInfoText("$BINGLE_PAGE_DESC_StaggerDamageMax")
+	elseif (option == toggleStaggerAnyOID_B)
+		SetInfoText("$BINGLE_PAGE_DESC_StaggerAny")
+	else
+		SetInfoText("")
+	endif
+endEvent
+
 event OnOptionSelect(int option)
 	if (option == toggleRestrainMovementOID_B)
 		valueRestrainMovement = !valueRestrainMovement
@@ -236,6 +297,7 @@ event OnOptionSelect(int option)
 		else
 			UpdateSaveConfig(0, 10, 0)
 		endif
+		
 	elseif (option == toggleAimHelperOID_B)
 		valueAimHelper = !valueAimHelper
 		SetToggleOptionValue(toggleAimHelperOID_B, valueAimHelper)
@@ -244,6 +306,7 @@ event OnOptionSelect(int option)
 		else
 			UpdateSaveConfig(0, 11, 0)
 		endif
+		
 	elseif (option == toggleAimHelperOID_B)
 		valueAimHelper = !valueAimHelper
 		SetToggleOptionValue(toggleAimHelperOID_B, valueAimHelper)
@@ -252,6 +315,7 @@ event OnOptionSelect(int option)
 		else
 			UpdateSaveConfig(0, 11, 0)
 		endif
+		
 	elseif (option == toggleHitFeedbackOID_B)
 		valueHitFeedback = !valueHitFeedback
 		SetToggleOptionValue(toggleHitFeedbackOID_B, valueHitFeedback)
@@ -260,6 +324,7 @@ event OnOptionSelect(int option)
 		else
 			UpdateSaveConfig(0, 13, 0)
 		endif
+		
 	elseif (option == resetQuestOID_B)
 		SetOptionFlags(option, OPTION_FLAG_DISABLED)
 		Utility.Wait(1)
@@ -273,6 +338,24 @@ event OnOptionSelect(int option)
 		Utility.Wait(1)
 		Debug.Notification("$BINGLE_QUESTRESET_START")
 		_BingleImmersiveFeedbackHelper.Start()
+		
+	elseif (option == toggleSpeedAdjustmentOID_B)
+		valueSpeedAdjustment = !valueSpeedAdjustment
+		SetToggleOptionValue(toggleSpeedAdjustmentOID_B, valueSpeedAdjustment)
+		if(valueSpeedAdjustment)
+			UpdateSaveConfig(0, 14, 1)
+		else
+			UpdateSaveConfig(0, 14, 0)
+		endif
+		
+	elseif (option == toggleStaggerAnyOID_B)
+		valueStaggerAny = !valueStaggerAny
+		SetToggleOptionValue(toggleStaggerAnyOID_B, valueStaggerAny)
+		if(valueStaggerAny)
+			UpdateSaveConfig(0, 20, 1)
+		else
+			UpdateSaveConfig(0, 20, 0)
+		endif
 	endIf
 endEvent
 
@@ -318,6 +401,36 @@ event OnOptionSliderOpen(int option)
 		SetSliderDialogRange(0.5, 3)
 		SetSliderDialogStartValue(valueChargeMul)
 		SetSliderDialogDefaultValue(1.0)
+		
+	elseif(option == sliderDeflectChanceMulOID_S)
+		SetSliderDialogInterval(0.1)
+		SetSliderDialogRange(0, 100)
+		SetSliderDialogStartValue(valueDeflectChanceMul)
+		SetSliderDialogDefaultValue(10)
+		
+	elseif(option == sliderDeflectChanceMaxOID_S)
+		SetSliderDialogInterval(0.1)
+		SetSliderDialogRange(0, 100)
+		SetSliderDialogStartValue(valueDeflectChanceMax)
+		SetSliderDialogDefaultValue(50.0)
+		
+	elseif(option == sliderStaggerResetTimeOID_S)
+		SetSliderDialogInterval(0.01)
+		SetSliderDialogRange(1.0, 5)
+		SetSliderDialogStartValue(valueStaggerResetTime)
+		SetSliderDialogDefaultValue(2.0)
+		
+	elseif(option == sliderStaggerLimitOID_S)
+		SetSliderDialogInterval(1)
+		SetSliderDialogRange(1, 10)
+		SetSliderDialogStartValue(valueStaggerLimit)
+		SetSliderDialogDefaultValue(3)
+		
+	elseif(option == sliderStaggerDamageMaxOID_S)
+		SetSliderDialogInterval(1)
+		SetSliderDialogRange(25, 1000)
+		SetSliderDialogStartValue(valueStaggerDamageMax)
+		SetSliderDialogDefaultValue(200)
 	
 	endif
 endEvent
@@ -367,6 +480,31 @@ event OnOptionSliderAccept(int option, float value)
 		valueChargeMul = value
 		SetSliderOptionValue(sliderChargeMulOID_S, valueChargeMul, "x {2}")
 		UpdateSaveConfig(0, 12, valueChargeMul)
+		
+	elseif(option == sliderDeflectChanceMulOID_S)
+		valueDeflectChanceMul = value
+		SetSliderOptionValue(sliderDeflectChanceMulOID_S, valueDeflectChanceMul, "{2}% of armor value")
+		UpdateSaveConfig(0, 15, valueDeflectChanceMul / 100.0)
+		
+	elseif(option == sliderDeflectChanceMaxOID_S)
+		valueDeflectChanceMax = value
+		SetSliderOptionValue(sliderDeflectChanceMaxOID_S, valueDeflectChanceMax, "{2}%")
+		UpdateSaveConfig(0, 16, valueDeflectChanceMax)
+		
+	elseif(option == sliderStaggerResetTimeOID_S)
+		valueStaggerResetTime = value
+		SetSliderOptionValue(sliderStaggerResetTimeOID_S, valueStaggerResetTime, "{2} sec(s)")
+		UpdateSaveConfig(0, 17, valueStaggerResetTime)
+		
+	elseif(option == sliderStaggerLimitOID_S)
+		valueStaggerLimit = value
+		SetSliderOptionValue(sliderStaggerLimitOID_S, valueStaggerLimit, "{0} hit(s)")
+		UpdateSaveConfig(0, 18, valueStaggerLimit)
+		
+	elseif(option == sliderStaggerDamageMaxOID_S)
+		valueStaggerDamageMax = value
+		SetSliderOptionValue(sliderStaggerDamageMaxOID_S, valueStaggerDamageMax, "{0}")
+		UpdateSaveConfig(0, 19, valueStaggerDamageMax)
 		
 	endif
 endEvent
