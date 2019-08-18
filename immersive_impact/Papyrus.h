@@ -16,6 +16,13 @@ namespace BingleImmersiveImpact {
 		AimHelper,
 		ChargeMul,
 		HitFeedback,
+		SpeedAdjustment,
+		DeflectChanceMul,
+		DeflectChanceMax,
+		StaggerResetTime,
+		StaggerLimit,
+		StaggerDamageMax,
+		StaggerAny,
 		EndOfEnumMarker
 	};
 	static const char* ConfigTypeNames[ConfigType::EndOfEnumMarker] = {
@@ -32,12 +39,20 @@ namespace BingleImmersiveImpact {
 		"RestrainMovement",
 		"AimHelper",
 		"ChargeMul",
-		"HitFeedback"
+		"HitFeedback",
+		"SpeedAdjustment",
+		"DeflectChanceMul",
+		"DeflectChanceMax",
+		"StaggerResetTime",
+		"StaggerLimit",
+		"StaggerDamageMax",
+		"StaggerAny"
 	};
 	float speedValues[];
 	void UpdateFromConfig(ConfigType, float);
 	float GetDefault(ConfigType);
 	void SetCustomized(int slot, bool b);
+	void EnableSpeedAdjustment(bool b);
 }
 
 //Register papyrus functions
