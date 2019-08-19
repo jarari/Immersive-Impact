@@ -233,8 +233,8 @@ event OnPageReset(string a_page)
 		toggleAimHelperOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_AIMHELPER", valueAimHelper)
 		sliderChargeMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_CHARGEMUL", valueChargeMul, "x {2}")
 		toggleHitFeedbackOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_HITFEEDBACK", valueHitFeedback)
-		sliderDeflectChanceMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DeflectChanceMul", valueDeflectChanceMul, "{2}% of armor value")
-		sliderDeflectChanceMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DeflectChanceMax", valueDeflectChanceMax, "{2}%")
+		sliderDeflectChanceMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DeflectChanceMul", valueDeflectChanceMul, "{1}% of armor value")
+		sliderDeflectChanceMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DeflectChanceMax", valueDeflectChanceMax, "{1}%")
 		sliderStaggerResetTimeOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_StaggerResetTime", valueStaggerResetTime, "{2} sec(s)")
 		sliderStaggerLimitOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_StaggerLimit", valueStaggerLimit, "{0} hit(s)")
 		sliderStaggerDamageMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_StaggerDamageMax", valueStaggerDamageMax, "{0}")
@@ -398,7 +398,7 @@ event OnOptionSliderOpen(int option)
 		
 	elseif(option == sliderChargeMulOID_S)
 		SetSliderDialogInterval(0.01)
-		SetSliderDialogRange(0.5, 3)
+		SetSliderDialogRange(0.1, 3)
 		SetSliderDialogStartValue(valueChargeMul)
 		SetSliderDialogDefaultValue(1.0)
 		
@@ -483,12 +483,12 @@ event OnOptionSliderAccept(int option, float value)
 		
 	elseif(option == sliderDeflectChanceMulOID_S)
 		valueDeflectChanceMul = value
-		SetSliderOptionValue(sliderDeflectChanceMulOID_S, valueDeflectChanceMul, "{2}% of armor value")
+		SetSliderOptionValue(sliderDeflectChanceMulOID_S, valueDeflectChanceMul, "{1}% of armor value")
 		UpdateSaveConfig(0, 15, valueDeflectChanceMul / 100.0)
 		
 	elseif(option == sliderDeflectChanceMaxOID_S)
 		valueDeflectChanceMax = value
-		SetSliderOptionValue(sliderDeflectChanceMaxOID_S, valueDeflectChanceMax, "{2}%")
+		SetSliderOptionValue(sliderDeflectChanceMaxOID_S, valueDeflectChanceMax, "{1}%")
 		UpdateSaveConfig(0, 16, valueDeflectChanceMax)
 		
 	elseif(option == sliderStaggerResetTimeOID_S)
