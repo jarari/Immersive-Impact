@@ -4,6 +4,7 @@
 #include "SKSE/GameMenus.h"
 #include "EquipWatcher.h"
 #include "HitFeedback.h"
+#include <SKSE\SafeWrite.h>
 
 MenuCloseWatcher *MenuCloseWatcher::instance = nullptr;
 bool MenuCloseWatcher::actionRequested = false;
@@ -50,6 +51,10 @@ EventResult MenuCloseWatcher::ReceiveEvent(MenuOpenCloseEvent * evn, EventDispat
 		if (EquipWatcher::isInitialized) {
 			EquipWatcher::ResetHook();
 		}
+	}
+	else if (uistr && evn->menuName == uistr->loadingMenu && !evn->opening) {
+		if (mm && !mm->IsMenuOpen(&BSFixedString("HitFeedbackHelper")) && ui)
+			CALL_MEMBER_FN(ui, AddMessage)(&StringCache::Ref("HitFeedbackHelper"), UIMessage::kMessage_Open, nullptr);
 	}
 	return kEvent_Continue;
 }
