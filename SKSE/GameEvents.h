@@ -15,6 +15,7 @@ enum EventResult
 template <typename EventT, typename EventArgT = EventT>
 class EventDispatcher
 {
+protected:
 	typedef BSTEventSink<EventT> SinkT;
 
 	SimpleLock			lock;				// 000

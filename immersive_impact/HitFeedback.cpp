@@ -19,11 +19,123 @@
 #include <SKSE/ScaleformLoader.h>
 #include <SKSE/ScaleformMovie.h>
 #include <SKSE\SafeWrite.h>
+#include "BSTHashMap.h"
+#include <cstddef>
+#include <cstdint>
 using std::vector;
 using std::pair;
 
 IThreadSafeBasicMemPool<BingleHitWaitNextFrame, 16>	s_bingleHitWaitNextFrameDelegatePool;
 IThreadSafeBasicMemPool<BingleStaggerWaitNextFrame, 16>	s_bingleStaggerWaitNextFrameDelegatePool;
+
+template<class Ty>
+static inline Ty SafeWrite_Impl(std::size_t addr, Ty data)
+{
+	DWORD	oldProtect = 0;
+	Ty		oldVal = 0;
+
+	if (VirtualProtect((void*)addr, 4, PAGE_EXECUTE_READWRITE, &oldProtect))
+	{
+		Ty* p = (Ty*)addr;
+		oldVal = *p;
+		*p = data;
+		VirtualProtect((void*)addr, 4, oldProtect, &oldProtect);
+	}
+
+	return oldVal;
+}
+
+std::uint32_t SafeWrite32uint32(std::uint32_t addr, std::uint32_t data)
+{
+	return SafeWrite_Impl(addr, data);
+}
+
+template <class Ty, class TRet, class... TArg>
+inline auto SafeWrite32uint32(UInt32 jumpSrc, TRet(Ty::* fn)(TArg...)) -> decltype(fn)
+{
+	typedef decltype(fn) Fn;
+	union
+	{
+		UInt32	u32;
+		Fn		fn;
+	} data;
+	data.fn = fn;
+
+	data.u32 = SafeWrite32uint32(jumpSrc, data.u32);
+	return data.fn;
+}
+
+// HDT patch by himika
+
+class FreezeEventHandler : public BSTEventSink<MenuOpenCloseEvent>
+{
+public:
+	typedef EventResult(FreezeEventHandler::* FnReceiveEvent)(MenuOpenCloseEvent* evn, BSTEventSource<MenuOpenCloseEvent>* src);
+
+	static BSTHashMap<UInt32, FnReceiveEvent> ms_handlers;
+
+	UInt32 GetVPtr() const
+	{
+		return *(UInt32*)this;
+	}
+
+	EventResult ReceiveEvent_Hook(MenuOpenCloseEvent* evn, BSTEventSource<MenuOpenCloseEvent>* src)
+	{
+		static BSFixedString menuName = "HitFeedbackHelper";
+
+		if (evn->menuName == menuName)
+		{
+			return kEvent_Continue;
+		}
+
+		FnReceiveEvent fn;
+		return (ms_handlers.GetAt(GetVPtr(), fn)) ? (this->*fn)(evn, src) : kEvent_Continue;
+	}
+
+	void InstallHook()
+	{
+		UInt32 vptr = GetVPtr();
+		FreezeEventHandler::FnReceiveEvent pFn = SafeWrite32uint32(vptr + 4, &FreezeEventHandler::ReceiveEvent_Hook);
+		ms_handlers.SetAt(vptr, pFn);
+	}
+};
+
+BSTHashMap<UInt32, FreezeEventHandler::FnReceiveEvent> FreezeEventHandler::ms_handlers;
+
+class MenuOpenCloseEventSource : public EventDispatcher<MenuOpenCloseEvent>
+{
+public:
+	void ProcessHook()
+	{
+		lock.Lock();
+
+		BSTEventSink<MenuOpenCloseEvent>* sink;
+		UInt32 idx = 0;
+		while (eventSinks.GetNthItem(idx, sink))
+		{
+			const char* className = GetObjectClassName(sink);
+			if (strcmp(className, "FreezeEventHandler@@") == 0)
+			{
+				FreezeEventHandler* freezeEventHandler = static_cast<FreezeEventHandler*>(sink);
+				freezeEventHandler->InstallHook();
+			}
+
+			++idx;
+		}
+
+		lock.Release();
+	}
+
+	static void InitHook()
+	{
+		MenuManager* mm = MenuManager::GetSingleton();
+		if (mm)
+		{
+			MenuOpenCloseEventSource* pThis = static_cast<MenuOpenCloseEventSource*>(mm->MenuOpenCloseEventDispatcher());
+			pThis->ProcessHook();
+		}
+	}
+};
 
 HitFeedbackHelper* HitFeedbackHelper::instance = nullptr;
 
@@ -48,6 +160,7 @@ void HitFeedbackHelper::Register() {
 		helper->SetInstance(helper);
 		return helper;
 		});
+	MenuOpenCloseEventSource::InitHook();
 	_MESSAGE("HitFeedbackHelper registered");
 }
 
