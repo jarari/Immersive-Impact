@@ -31,6 +31,10 @@
     <ClInclude Include="AimHelperThread.h" />
     <ClInclude Include="HitFeedback.h" />
     <ClInclude Include="BingleEventInvoker.h" />
+    <ClInclude Include="BSTScatterTable.h" />
+    <ClInclude Include="CRC.h" />
+    <ClInclude Include="Memory.h" />
+    <ClInclude Include="BSTHashMap.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

@@ -132,10 +132,14 @@
     <ClInclude Include="ActorModifier.h" />
     <ClInclude Include="AimHelperThread.h" />
     <ClInclude Include="BingleEventInvoker.h" />
+    <ClInclude Include="BSTHashMap.h" />
+    <ClInclude Include="BSTScatterTable.h" />
+    <ClInclude Include="CRC.h" />
     <ClInclude Include="GameLoadWatcher.h" />
     <ClInclude Include="ConfigHandler.h" />
     <ClInclude Include="EquipWatcher.h" />
     <ClInclude Include="HitFeedback.h" />
+    <ClInclude Include="Memory.h" />
     <ClInclude Include="MenuCloseWatcher.h" />
     <ClInclude Include="Papyrus.h" />
     <ClInclude Include="PluginData.h" />
