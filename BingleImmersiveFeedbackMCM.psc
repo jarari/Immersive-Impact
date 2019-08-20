@@ -32,6 +32,7 @@ int toggleSpeedAdjustmentOID_B
 int toggleRestrainMovementOID_B
 int toggleAimHelperOID_B
 int toggleAlwaysChargeInOID_B
+int toggleEnemyOnlyOID_B
 int toggleHitFeedbackOID_B
 int toggleStaggerAnyOID_B
 int resetQuestOID_B
@@ -60,6 +61,7 @@ bool property valueSpeedAdjustment auto
 bool property valueRestrainMovement auto
 bool property valueAimHelper auto
 bool property valueAlwaysChargeIn auto
+bool property valueEnemyOnly auto
 bool property valueHitFeedback auto
 bool property valueStaggerAny auto
 int property IFState auto
@@ -233,6 +235,12 @@ Function SyncConfig(int type, float v)
 		endif
 	elseif(type == 24)
 		valueChargeVelocity = v
+	elseif(type == 25)
+		if(v == 1)
+			valueEnemyOnly = true
+		else
+			valueEnemyOnly = false
+		endif
 	endif
 EndFunction
 
@@ -260,6 +268,7 @@ event OnPageReset(string a_page)
 		sliderChargeVelocityOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_CHARGEVELOCITY", valueChargeVelocity, "{0}")
 		toggleAlwaysChargeInOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_ALWAYSCHARGEIN", valueAlwaysChargeIn)
 		sliderAimCompensationStrengthOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_AIMCOMPENSTATIONSTRENGH", valueAimCompensationStrength, "{2}")
+		toggleEnemyOnlyOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_AIMENEMYONLY", valueEnemyOnly)
 		AddEmptyOption()
 		
 		toggleHitFeedbackOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_HITFEEDBACK", valueHitFeedback)
@@ -404,6 +413,15 @@ event OnOptionSelect(int option)
 			UpdateSaveConfig(0, 23, 1)
 		else
 			UpdateSaveConfig(0, 23, 0)
+		endif
+		
+	elseif (option == toggleEnemyOnlyOID_B)
+		valueEnemyOnly = !valueEnemyOnly
+		SetToggleOptionValue(toggleEnemyOnlyOID_B, valueEnemyOnly)
+		if(valueEnemyOnly)
+			UpdateSaveConfig(0, 25, 1)
+		else
+			UpdateSaveConfig(0, 25, 0)
 		endif
 	endIf
 endEvent

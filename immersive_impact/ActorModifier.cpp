@@ -299,7 +299,7 @@ TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 			}
 			float actualMaxDistance = maxDistance + r;
 
-			if (dd <= actualMaxDistance && target != player)
+			if (dd <= actualMaxDistance && target != player && (!configValues[ConfigType::AimEnemyOnly] || !(target->flags1 & Actor::Flags1::kFlags_IsPlayerTeammate)))
 			{
 				float dot = dx * camForward.x + dy * camForward.y + dz * camForward.z;
 				float ang = std::acos(dot) * 180.0f / M_PI;

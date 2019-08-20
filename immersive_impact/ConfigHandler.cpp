@@ -30,7 +30,8 @@ const char* ConfigTypeNames[ConfigType::EndOfEnumMarker] = {
 	"ChargeDistMax",
 	"AimCompensationStrength",
 	"AlwaysChargeIn",
-	"ChargeVelocity"
+	"ChargeVelocity",
+	"AimEnemyOnly"
 };
 float configValues[ConfigType::EndOfEnumMarker];
 
@@ -251,6 +252,12 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
 		UpdateFromConfig(type, val);
 		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(AimEnemyOnly);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
 	}
 	else{
 		if (Exists(formIdstr)) {
@@ -349,6 +356,8 @@ float ConfigHandler::GetDefault(ConfigType c) {
 			return 0;
 		case ConfigType::ChargeVelocity:
 			return 100.0f;
+		case ConfigType::AimEnemyOnly:
+			return 0;
 	}
 	return 0.0f;
 }

@@ -29,6 +29,7 @@ enum ConfigType {
 	AimCompensationStrength,
 	AlwaysChargeIn,
 	ChargeVelocity,
+	AimEnemyOnly,
 	EndOfEnumMarker
 };
 extern const char* ConfigTypeNames[];
