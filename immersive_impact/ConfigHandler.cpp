@@ -5,8 +5,37 @@
 #include <sys/stat.h>
 #include <immersive_impact\HitFeedback.h>
 
-#define CTYPE(name) BingleImmersiveImpact::ConfigType::name
-#define CNAME(ctype) BingleImmersiveImpact::ConfigTypeNames[ctype]
+const char* ConfigTypeNames[ConfigType::EndOfEnumMarker] = {
+	"Offset",
+	"LeftOffset",
+	"Pre",
+	"Swing1h",
+	"Swing2h",
+	"SwingDag",
+	"SwingFist",
+	"Post",
+	"Custom_Swing",
+	"Custom_Swing",
+	"RestrainMovement",
+	"AimHelper",
+	"ActivationRangeMul",
+	"HitFeedback",
+	"SpeedAdjustment",
+	"DeflectChanceMul",
+	"DeflectChanceMax",
+	"StaggerResetTime",
+	"StaggerLimit",
+	"StaggerDamageMax",
+	"StaggerAny",
+	"ChargeDistMax",
+	"AimCompensationStrength",
+	"AlwaysChargeIn",
+	"ChargeVelocity"
+};
+float configValues[ConfigType::EndOfEnumMarker];
+
+#define CTYPE(name) ConfigType::name
+#define CNAME(ctype) ConfigTypeNames[ctype]
 #define UNNAMED "Unnamed Weapon";
 
 CSimpleIniA ConfigHandler::ini(true, false, false);
@@ -18,7 +47,6 @@ bool FileExists(const char* path) {
 	return (stat(path, &buffer) == 0);
 }
 
-using namespace BingleImmersiveImpact;
 ConfigHandler::ConfigHandler() {
 	if (instance)
 		delete(instance);
@@ -41,9 +69,9 @@ ConfigHandler::ConfigHandler() {
 		ini.SetValue("General", "RestrainMovement", f2c);
 		sprintf_s(f2c, "%f", GetDefault(CTYPE(AimHelper)));
 		ini.SetValue("General", "AimHelper", f2c);
-		sprintf_s(f2c, "%f", GetDefault(CTYPE(ChargeMul)));
-		ini.SetValue("General", "ChargeMul", f2c);
-		sprintf_s(f2c, "%f", GetDefault(CTYPE(HitFeedback)));
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(ActivationRangeMul)));
+		ini.SetValue("General", "ActivationRangeMul", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(EnableHitFeedback)));
 		ini.SetValue("General", "HitFeedback", f2c);
 		sprintf_s(f2c, "%f", GetDefault(CTYPE(SpeedAdjustment)));
 		ini.SetValue("General", "SpeedAdjustment", f2c);
@@ -59,6 +87,12 @@ ConfigHandler::ConfigHandler() {
 		ini.SetValue("General", "StaggerDamageMax", f2c);
 		sprintf_s(f2c, "%f", GetDefault(CTYPE(StaggerAny)));
 		ini.SetValue("General", "StaggerAny", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(ChargeDistMax)));
+		ini.SetValue("General", "ChargeDistMax", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(AimCompensationStrength)));
+		ini.SetValue("General", "AimCompensationStrength", f2c);
+		sprintf_s(f2c, "%f", GetDefault(CTYPE(AlwaysChargeIn)));
+		ini.SetValue("General", "AlwaysChargeIn", f2c);
 		ini.SaveFile(filepath, false);
 	}
 	SI_Error error = ini.LoadFile(filepath);
@@ -138,13 +172,13 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 			ActorModifier::EnableAimHelper(true);
 		BingleEventInvoker::SyncConfig(type, val);
 
-		type = CTYPE(ChargeMul);
+		type = CTYPE(ActivationRangeMul);
 		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
 		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
 		UpdateFromConfig(type, val);
 		BingleEventInvoker::SyncConfig(type, val);
 
-		type = CTYPE(HitFeedback);
+		type = CTYPE(EnableHitFeedback);
 		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
 		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
 		if (val == 1)
@@ -193,6 +227,30 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
 		UpdateFromConfig(type, val);
 		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(ChargeDistMax);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(AimCompensationStrength);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(AlwaysChargeIn);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
+
+		type = CTYPE(ChargeVelocity);
+		snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+		val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+		UpdateFromConfig(type, val);
+		BingleEventInvoker::SyncConfig(type, val);
 	}
 	else{
 		if (Exists(formIdstr)) {
@@ -201,7 +259,7 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 				UpdateFromConfig(CTYPE(Speed_CustomL_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomL_Swing)), NULL, NULL)));
 				BingleEventInvoker::SyncConfig(CTYPE(Speed_CustomL_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomL_Swing)), NULL, NULL)));
 			} else {
-				BingleImmersiveImpact::UpdateFromConfig(CTYPE(Speed_CustomR_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomR_Swing)), NULL, NULL)));
+				UpdateFromConfig(CTYPE(Speed_CustomR_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomR_Swing)), NULL, NULL)));
 				BingleEventInvoker::SyncConfig(CTYPE(Speed_CustomR_Swing), std::stof(ini.GetValue(formIdstr, CNAME(CTYPE(Speed_CustomR_Swing)), NULL, NULL)));
 			}
 		} else {
@@ -226,7 +284,7 @@ void ConfigHandler::LoadConfig(UInt32 formId, int weapontype, int slot) {
 	}
 }
 
-void ConfigHandler::SetConfig(UInt32 formId, BingleImmersiveImpact::ConfigType ctype, float v, bool save) {
+void ConfigHandler::SetConfig(UInt32 formId, ConfigType ctype, float v, bool save) {
 	char f2c[128];
 	sprintf_s(f2c, "%f", v);
 	char formIdstr[32];
@@ -245,4 +303,56 @@ void ConfigHandler::SaveConfig() {
 
 bool ConfigHandler::Exists(const char * type) {
 	return (ini.GetSectionSize(type) >= 0);
+}
+
+float ConfigHandler::GetDefault(ConfigType c) {
+	switch (c) {
+		case ConfigType::Speed_Pre:
+			return 0.6f;
+		case ConfigType::Speed_Swing1h:
+			return 1.5f;
+		case ConfigType::Speed_Swing2h:
+			return 1.8f;
+		case ConfigType::Speed_SwingDag:
+			return 1.1f;
+		case ConfigType::Speed_SwingFist:
+			return 1.3f;
+		case ConfigType::Speed_Post:
+			return 1.25f;
+		case ConfigType::RestrainMovement:
+			return 0;
+		case ConfigType::AimHelper:
+			return 0;
+		case ConfigType::ActivationRangeMul:
+			return 1.0f;
+		case ConfigType::EnableHitFeedback:
+			return 0;
+		case ConfigType::SpeedAdjustment:
+			return 1;
+		case ConfigType::DeflectChanceMul:
+			return 0.1f;
+		case ConfigType::DeflectChanceMax:
+			return 50.0f;
+		case ConfigType::StaggerResetTime:
+			return 2.0f;
+		case ConfigType::StaggerLimit:
+			return 3.0f;
+		case ConfigType::StaggerDamageMax:
+			return 400.0f;
+		case ConfigType::StaggerAny:
+			return 0;
+		case ConfigType::ChargeDistMax:
+			return 300.0f;
+		case ConfigType::AimCompensationStrength:
+			return 1.0f;
+		case ConfigType::AlwaysChargeIn:
+			return 0;
+		case ConfigType::ChargeVelocity:
+			return 100.0f;
+	}
+	return 0.0f;
+}
+
+void ConfigHandler::UpdateFromConfig(ConfigType configtype, float v) {
+	configValues[configtype] = v;
 }

@@ -13,6 +13,9 @@
 #include "AimHelperThread.h"
 #include "BingleEventInvoker.h"
 #include <SKSE\GameRTTI.h>
+#include "Papyrus.h"
+#include <immersive_impact\ConfigHandler.h>
+using namespace BingleImmersiveImpact;
 
 typedef UInt32(*_LookupActorValueByName)(const char * name);
 extern const _LookupActorValueByName LookupActorValueByName;
@@ -328,18 +331,19 @@ void RotatePlayerAngleByAmount(float rotZ, float rotX)
 	
 	controller->Rotate(player->rot.z, player->rot.x, rotZ, rotX, wait, 0);*/
 	//Why rotate cam when view's restrained? Fuck it.
+	float rotateAmountConfigured = rotateAmount * configValues[ConfigType::AimCompensationStrength];
 	float drx = rotX - player->rot.x;
 	float drz = rotZ - player->rot.z;
 	if (drx < -M_PI)
 		drx += M_PI * 2.0f;
 	else if (drx > M_PI)
 		drx -= M_PI * 2.0f;
-	drx = max(min(drx, rotateAmount), -rotateAmount);
+	drx = max(min(drx, rotateAmountConfigured), -rotateAmountConfigured);
 	if (drz < -M_PI)
 		drz += M_PI * 2.0f;
 	else if (drz > M_PI)
 		drz -= M_PI * 2.0f;
-	drz = max(min(drz, rotateAmount), -rotateAmount);
+	drz = max(min(drz, rotateAmountConfigured), -rotateAmountConfigured);
 	player->rot.x += drx;
 	player->rot.z += drz;
 }
@@ -469,7 +473,12 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	if (aimTarget == nullptr)
 		return;
 	AimHelperThread::RequestThread(fn<void, Actor*, float>(LookAtRef), aimTarget, td.size);
+	//Don't calculate at all if it's set to 0.
+	if (configValues[ConfigType::ChargeDistMax] == 0)
+		return;
+
 	//No need to move the player backward
+	//tpdist = Final distance from target
 	float tpdist = aimHelperMinDist + td.size;
 	if (tpdist > td.dd) {
 		aimTarget = nullptr;
@@ -481,9 +490,23 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	float dy = aimTarget->pos.y - pos.y;
 	float dz = aimTarget->pos.z - pos.z;
 	//To prevent player from being stuck in the terrain
-	if (dz > 100)
+	if (dz > 100) {
+		aimTarget = nullptr;
 		return;
-	//We don't need dz value anymore. It shouldn't be affecting x, y values.
+	}
+
+	float xydd = sqrt(dx * dx + dy * dy);
+	if (configValues[ConfigType::AlwaysChargeIn]) {
+		tpdist = max(xydd - configValues[ConfigType::ChargeDistMax], tpdist);
+	}
+	else {
+		if (xydd - tpdist > configValues[ConfigType::ChargeDistMax]) {
+			aimTarget = nullptr;
+			return;
+		}
+	}
+
+	//We don't need dz value anymore. It shouldn't be affecting x, y values, since we don't want player to pop upward.
 	dz = 0;
 	NormalizeVector(dx, dy, dz);
 	dx *= tpdist;
@@ -491,7 +514,7 @@ void ActorModifier::LockAim(float aimHelperMinDist, float aimHelperMaxDist) {
 	//player->pos = pos;
 	//MoveRefrToPosition(player, &refHandle, player->parentCell, CALL_MEMBER_FN(player, GetWorldspace)() , &pos, &(player->rot));
 	//x2 at armorWeight 0, x1.1 at armorWeight 100(Heaviest armor set is around 80)
-	float vel = 750.0f * (100.0f / (EquipWatcher::playerArmorWeight * 9.5f + 50.0f) + 1.0f);
+	float vel = configValues[ConfigType::ChargeVelocity] * (100.0f / (EquipWatcher::playerArmorWeight * 9.5f + 50.0f) + 1.0f);
 	BingleEventInvoker::TranslateToTarget(player);
 	BingleEventInvoker::TranslateTo(aimTarget->pos.x - dx, aimTarget->pos.y - dy, player->pos.z, vel);
 

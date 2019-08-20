@@ -9,6 +9,7 @@
 #include "ActorModifier.h"
 #include "EquipWatcher.h"
 #include "Papyrus.h"
+#include "ConfigHandler.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <time.h>
@@ -306,11 +307,15 @@ ActiveEffect* GetActiveEffectFromActor(Actor* actor) {
 	return nullptr;
 }
 
-void deflectAttack(Actor* actor, ActiveEffect* ae, bool playSound = true) {
+void deflectAttack(Actor* actor, ActiveEffect* ae, bool isArrow = false, bool playSound = true) {
 	//ae->magnitude = 0;
 	//ae->duration = ae->elapsed;
-	actor->animGraphHolder.SendAnimationEvent("staggerStop");
-	if (actor != *g_thePlayer) {
+	bool isStaggering;
+	actor->animGraphHolder.GetAnimationVariableBool("IsStaggering", isStaggering);
+	if (isStaggering) {
+		actor->animGraphHolder.SendAnimationEvent("staggerStop");
+	}
+	if (actor != *g_thePlayer && !isArrow) {
 		actor->animGraphHolder.SendAnimationEvent("attackStart");
 	}
 	if(playSound)
@@ -338,12 +343,6 @@ void Dump(void* mem, unsigned int size) {
 	}
 }
 
-float HitFeedback::deflectChanceMul = 0.0f;
-float HitFeedback::deflectChanceMax = 0.0f;
-float HitFeedback::staggerResetTime = 0.0f;
-float HitFeedback::staggerLimit = 0.0f;
-float HitFeedback::staggerDamageMax = 0.0f;
-float HitFeedback::staggerAny = 0;
 std::random_device rd;
 EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	if (!feedbackEnabled)
@@ -360,34 +359,36 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	//If the damage is done by magic
 	//If the target cannot be knock-downed.
 	if (evn->projectileFormID != 0
-		|| (!canKnockdown(target) && target != *g_thePlayer && staggerAny == 0))
+		|| (!canKnockdown(target) && target != *g_thePlayer && configValues[ConfigType::StaggerAny] == 0))
 		return kEvent_Continue;
 
 	if (ae == nullptr)
 		return kEvent_Continue;
 
-	if (ae->elapsed - ae->duration > staggerResetTime)
+	if (ae->elapsed - ae->duration > configValues[ConfigType::StaggerResetTime])
 		ae->magnitude = 0;
-	ae->duration = ae->elapsed;
 
-	if (evn->flags.blocked && !evn->flags.powerAttack && !evn->flags.bash) {
-		deflectAttack(target, ae, false);
-		return kEvent_Continue;
-	}
+	ae->duration = ae->elapsed;
 
 	//Dump(evn, 256);
 	TESObjectWEAP* wep = (TESObjectWEAP*)LookupFormByID(evn->sourceFormID);
 	if (wep == nullptr || wep->formType != kFormType_Weapon)
 		return kEvent_Continue;
-	float bowDivider = 1.0f;
+	bool isArrow = false;
 	if ((wep->type() == TESObjectWEAP::GameData::kType_Bow
 		|| wep->type() == TESObjectWEAP::GameData::kType_Bow2
 		|| wep->type() == TESObjectWEAP::GameData::kType_CrossBow
 		|| wep->type() == TESObjectWEAP::GameData::kType_CBow)
 		&& !evn->flags.bash) {
-		bowDivider = 4.0f;
-		ae->duration = ae->elapsed + 1.0f;
+		isArrow = true;
+		ae->duration += 1.0f;
 	}
+
+	if (evn->flags.blocked && !evn->flags.powerAttack && !evn->flags.bash) {
+		deflectAttack(target, ae, isArrow, false);
+		return kEvent_Continue;
+	}
+
 	TESContainer* container = DYNAMIC_CAST(target->baseForm, TESForm, TESContainer);
 	ExtraContainerChanges* pXContainerChanges = static_cast<ExtraContainerChanges*>(target->extraData.GetByType(kExtraData_ContainerChanges));
 	tList<ExtraContainerChanges::EntryData>* objList = (tList<ExtraContainerChanges::EntryData>*)pXContainerChanges->data->objList;
@@ -413,18 +414,25 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 		++it;
 	}
 	armorValue /= 100.0f;
-	float deflectChance = min(armorValue * deflectChanceMul, deflectChanceMax);
+	float deflectChance = min(armorValue * configValues[ConfigType::DeflectChanceMul], configValues[ConfigType::DeflectChanceMax]);
 	std::mt19937 e{ rd() }; // or std::default_random_engine e{rd()};
 	std::uniform_int_distribution<int> dist{ 0, 99 };
 	float chance = dist(e);
 	if (chance < deflectChance) {
-		deflectAttack(target, ae);
+		deflectAttack(target, ae, isArrow);
 		evn->flags.blocked = true;
+		TESFullName* pFullName = DYNAMIC_CAST(target->baseForm, TESForm, TESFullName);
+		char buff[64];
+		const char* name = "Unknown";
+		if (pFullName)
+			name = pFullName->name.data;
+		snprintf(buff, sizeof buff, "%s has resisted the attack!", name);
+		BingleEventInvoker::SendNotification(BSFixedString(buff));
 		return kEvent_Continue;
 	}
 	else {
 		//float damage = (damageBase + arrowDamage) * (1.0f - (armorValue * 0.12f + 0.03f * armorPieces));
-		BingleHitWaitNextFrame* cmd = BingleHitWaitNextFrame::Create(target, attacker, ae, evn->flags, bowDivider, wep->type());
+		BingleHitWaitNextFrame* cmd = BingleHitWaitNextFrame::Create(target, attacker, ae, evn->flags, isArrow, wep->type());
 		HitFeedbackHelper* helper = HitFeedbackHelper::GetInstance();
 		if (cmd) {
 			helper->SetTask(cmd);
@@ -433,7 +441,7 @@ EventResult HitFeedback::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* src) {
 	return kEvent_Continue;
 }
 
-BingleHitWaitNextFrame* BingleHitWaitNextFrame::Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, float bowDivider, int wepType){
+BingleHitWaitNextFrame* BingleHitWaitNextFrame::Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, bool isArrow, int wepType){
 	BingleHitWaitNextFrame* cmd = s_bingleHitWaitNextFrameDelegatePool.Allocate();
 	if (cmd)
 	{
@@ -441,7 +449,7 @@ BingleHitWaitNextFrame* BingleHitWaitNextFrame::Create(Actor* target, Actor* att
 		cmd->attacker = attacker;
 		cmd->ae = ae;
 		cmd->flags = flags;
-		cmd->bowDivider = bowDivider;
+		cmd->isArrow = isArrow;
 		cmd->wepType = wepType;
 	}
 	return cmd;
@@ -456,9 +464,10 @@ void BingleHitWaitNextFrame::Run(){
 		target->IsDead(1) ||
 		HitFeedback::lastDamage > -0.5f) 
 		return;
-	float staggerMagnitude = min(max(-HitFeedback::lastDamage, 25.0f) / HitFeedback::staggerDamageMax * min(flags.powerAttack + flags.bash + 1.0f, 2.0f), 1) / bowDivider / (ae->magnitude + 1);
-	if (ae->magnitude >= HitFeedback::staggerLimit) {
-		deflectAttack(target, ae, false);
+	float bowDivider = isArrow ? 4.0f : 1.0f;
+	float staggerMagnitude = min(max(-HitFeedback::lastDamage, 25.0f) / configValues[ConfigType::StaggerDamageMax]* min(flags.powerAttack + flags.bash + 1.0f, 2.0f), 1) / bowDivider / (ae->magnitude + 1);
+	if (ae->magnitude >= configValues[ConfigType::StaggerLimit]) {
+		deflectAttack(target, ae, isArrow, false);
 		return;
 	}
 	else {

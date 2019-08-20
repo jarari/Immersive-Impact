@@ -18,16 +18,20 @@ int sliderSwingSpeedFistOID_S
 int sliderBaseSpeedOID_S
 int sliderCustomLOID_S
 int sliderCustomROID_S
-int sliderChargeMulOID_S
+int sliderActivationRangeMulOID_S
 int sliderDeflectChanceMulOID_S
 int sliderDeflectChanceMaxOID_S
 int sliderStaggerResetTimeOID_S
 int sliderStaggerLimitOID_S
 int sliderStaggerDamageMaxOID_S
+int sliderChargeDistMaxOID_S
+int sliderAimCompensationStrengthOID_S
+int sliderChargeVelocityOID_S
 
 int toggleSpeedAdjustmentOID_B
 int toggleRestrainMovementOID_B
 int toggleAimHelperOID_B
+int toggleAlwaysChargeInOID_B
 int toggleHitFeedbackOID_B
 int toggleStaggerAnyOID_B
 int resetQuestOID_B
@@ -43,15 +47,19 @@ float property valueSwingSpeedFist auto
 float property valueBaseSpeed auto
 float property valueCustomL auto
 float property valueCustomR auto
-float property valueChargeMul auto
+float property valueActivationRangeMul auto
 float property valueDeflectChanceMul auto
 float property valueDeflectChanceMax auto
 float property valueStaggerResetTime auto
 float property valueStaggerLimit auto
 float property valueStaggerDamageMax auto
+float property valueChargeDistMax auto
+float property valueAimCompensationStrength auto
+float property valueChargeVelocity auto
 bool property valueSpeedAdjustment auto
 bool property valueRestrainMovement auto
 bool property valueAimHelper auto
+bool property valueAlwaysChargeIn auto
 bool property valueHitFeedback auto
 bool property valueStaggerAny auto
 int property IFState auto
@@ -70,6 +78,7 @@ bool defaultAimHelper
 Function UpdateConfig(int formId, int ctype, float v) global native
 Function UpdateSaveConfig(int formId, int ctype, float v) global native
 Function SaveConfig() global native
+Function ForceSyncConfig() global native
 
 
 ; INITIALIZATION ----------------------------------------------------------------------------------
@@ -124,6 +133,7 @@ event OnConfigInit()
 	UpdateV3()
 	UpdateV4()
 	UpdateV6()
+	ForceSyncConfig()
 endEvent
 
 ; @implements SKI_QuestBase
@@ -182,7 +192,7 @@ Function SyncConfig(int type, float v)
 			valueAimHelper = false
 		endif
 	elseif(type == 12)
-		valueChargeMul = v
+		valueActivationRangeMul = v
 	elseif(type == 13)
 		if(v == 1)
 			valueHitFeedback = true
@@ -211,6 +221,18 @@ Function SyncConfig(int type, float v)
 		else
 			valueStaggerAny = false
 		endif
+	elseif(type == 21)
+		valueChargeDistMax = v
+	elseif(type == 22)
+		valueAimCompensationStrength = v
+	elseif(type == 23)
+		if(v == 1)
+			valueAlwaysChargeIn = true
+		else
+			valueAlwaysChargeIn = false
+		endif
+	elseif(type == 24)
+		valueChargeVelocity = v
 	endif
 EndFunction
 
@@ -230,14 +252,22 @@ event OnPageReset(string a_page)
 		SetCursorPosition(1)
 		AddHeaderOption("$BINGLE_PAGE_SETTINGS_FEATURES")
 		toggleRestrainMovementOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_RESTRAINMOVEMENT", valueRestrainMovement)
+		AddEmptyOption()
+		
 		toggleAimHelperOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_AIMHELPER", valueAimHelper)
-		sliderChargeMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_CHARGEMUL", valueChargeMul, "x {2}")
+		sliderActivationRangeMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_ACTIVATIONRANGEMUL", valueActivationRangeMul, "x {2}")
+		sliderChargeDistMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_CHARGEDISTMAX", valueChargeDistMax, "{0}")
+		sliderChargeVelocityOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_CHARGEVELOCITY", valueChargeVelocity, "{0}")
+		toggleAlwaysChargeInOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_ALWAYSCHARGEIN", valueAlwaysChargeIn)
+		sliderAimCompensationStrengthOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_AIMCOMPENSTATIONSTRENGH", valueAimCompensationStrength, "{2}")
+		AddEmptyOption()
+		
 		toggleHitFeedbackOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_HITFEEDBACK", valueHitFeedback)
-		sliderDeflectChanceMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DeflectChanceMul", valueDeflectChanceMul, "{1}% of armor value")
-		sliderDeflectChanceMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DeflectChanceMax", valueDeflectChanceMax, "{1}%")
-		sliderStaggerResetTimeOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_StaggerResetTime", valueStaggerResetTime, "{2} sec(s)")
-		sliderStaggerLimitOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_StaggerLimit", valueStaggerLimit, "{0} hit(s)")
-		sliderStaggerDamageMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_StaggerDamageMax", valueStaggerDamageMax, "{0}")
+		sliderDeflectChanceMulOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DEFLECTCHANCEMUL", valueDeflectChanceMul, "{1}% of armor value")
+		sliderDeflectChanceMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_DEFLECTCHANCEMAX", valueDeflectChanceMax, "{1}%")
+		sliderStaggerResetTimeOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_STAGGERRESETTIME", valueStaggerResetTime, "{2} sec(s)")
+		sliderStaggerLimitOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_STAGGERLIMIT", valueStaggerLimit, "{0} hit(s)")
+		sliderStaggerDamageMaxOID_S = AddSliderOption("$BINGLE_PAGE_SETTINGS_STAGGERDAMAGEMAX", valueStaggerDamageMax, "{0}")
 		toggleStaggerAnyOID_B = AddToggleOption("$BINGLE_PAGE_SETTINGS_STAGGERANY", valueStaggerAny)
 		;resetQuestOID_B = AddTextOption("", "$BINGLE_PAGE_SETTINGS_RESETQUEST", OPTION_FLAG_NONE)
 		string stateText = "$BINGLE_IF_NOTINIT"
@@ -272,17 +302,27 @@ endEvent
 
 event OnOptionHighlight(int option)
 	if (option == sliderDeflectChanceMulOID_S)
-		SetInfoText("$BINGLE_PAGE_DESC_DeflectChanceMul")
+		SetInfoText("$BINGLE_PAGE_DESC_DEFLECTCHANCEMUL")
 	elseif (option == sliderDeflectChanceMaxOID_S)
-		SetInfoText("$BINGLE_PAGE_DESC_DeflectChanceMax")
+		SetInfoText("$BINGLE_PAGE_DESC_DEFLECTCHANCEMAX")
 	elseif (option == sliderStaggerResetTimeOID_S)
-		SetInfoText("$BINGLE_PAGE_DESC_StaggerResetTime")
+		SetInfoText("$BINGLE_PAGE_DESC_STAGGERRESETTIME")
 	elseif (option == sliderStaggerLimitOID_S)
-		SetInfoText("$BINGLE_PAGE_DESC_StaggerLimit")
+		SetInfoText("$BINGLE_PAGE_DESC_STAGGERLIMIT")
 	elseif (option == sliderStaggerDamageMaxOID_S)
-		SetInfoText("$BINGLE_PAGE_DESC_StaggerDamageMax")
+		SetInfoText("$BINGLE_PAGE_DESC_STAGGERDAMAGEMAX")
 	elseif (option == toggleStaggerAnyOID_B)
-		SetInfoText("$BINGLE_PAGE_DESC_StaggerAny")
+		SetInfoText("$BINGLE_PAGE_DESC_STAGGERANY")
+	elseif (option == sliderActivationRangeMulOID_S)
+		SetInfoText("$BINGLE_PAGE_DESC_ACTIVATIONRANGEMUL")
+	elseif (option == sliderChargeDistMaxOID_S)
+		SetInfoText("$BINGLE_PAGE_DESC_CHARGEDISTMAX")
+	elseif (option == sliderAimCompensationStrengthOID_S)
+		SetInfoText("$BINGLE_PAGE_DESC_AIMCOMPENSTATIONSTRENGH")
+	elseif (option == toggleAlwaysChargeInOID_B)
+		SetInfoText("$BINGLE_PAGE_DESC_ALWAYSCHARGEIN")
+	elseif (option == sliderChargeVelocityOID_S)
+		SetInfoText("$BINGLE_PAGE_DESC_CHARGEVELOCITY")
 	else
 		SetInfoText("")
 	endif
@@ -356,6 +396,15 @@ event OnOptionSelect(int option)
 		else
 			UpdateSaveConfig(0, 20, 0)
 		endif
+		
+	elseif (option == toggleAlwaysChargeInOID_B)
+		valueAlwaysChargeIn = !valueAlwaysChargeIn
+		SetToggleOptionValue(toggleAlwaysChargeInOID_B, valueAlwaysChargeIn)
+		if(valueAlwaysChargeIn)
+			UpdateSaveConfig(0, 23, 1)
+		else
+			UpdateSaveConfig(0, 23, 0)
+		endif
 	endIf
 endEvent
 
@@ -364,74 +413,75 @@ event OnOptionSliderOpen(int option)
 	SetSliderDialogRange(0.1, 3.0)
 	if(option == sliderPreAttackSpeedOID_S)
 		SetSliderDialogStartValue(valuePreAttackSpeed)
-		SetSliderDialogDefaultValue(defaultPreAttackSpeed)
 		
 	elseif(option == sliderSwingSpeedOID_S)
 		SetSliderDialogStartValue(valueSwingSpeed)
-		SetSliderDialogDefaultValue(defaultSwingSpeed)
 		
 	elseif(option == sliderSwingSpeed1HOID_S)
 		SetSliderDialogStartValue(valueSwingSpeed1H)
-		SetSliderDialogDefaultValue(defaultSwingSpeed1H)
 		
 	elseif(option == sliderSwingSpeedDaggerOID_S)
 		SetSliderDialogStartValue(valueSwingSpeedDagger)
-		SetSliderDialogDefaultValue(defaultSwingSpeedDagger)
 		
 	elseif(option == sliderSwingSpeedFistOID_S)
 		SetSliderDialogStartValue(valueSwingSpeedFist)
-		SetSliderDialogDefaultValue(defaultSwingSpeedFist)
 		
 	elseif(option == sliderBaseSpeedOID_S)
 		SetSliderDialogInterval(0.05)
 		SetSliderDialogRange(0.1, 1.25)
 		SetSliderDialogStartValue(valueBaseSpeed)
-		SetSliderDialogDefaultValue(defaultSwingSpeedFist)
 		
 	elseif(option == sliderCustomLOID_S)
 		SetSliderDialogStartValue(valueCustomL)
-		SetSliderDialogDefaultValue(1.0)
 		
 	elseif(option == sliderCustomROID_S)
 		SetSliderDialogStartValue(valueCustomR)
-		SetSliderDialogDefaultValue(1.0)
 		
-	elseif(option == sliderChargeMulOID_S)
+	elseif(option == sliderActivationRangeMulOID_S)
 		SetSliderDialogInterval(0.01)
 		SetSliderDialogRange(0.1, 3)
-		SetSliderDialogStartValue(valueChargeMul)
-		SetSliderDialogDefaultValue(1.0)
+		SetSliderDialogStartValue(valueActivationRangeMul)
 		
 	elseif(option == sliderDeflectChanceMulOID_S)
 		SetSliderDialogInterval(0.1)
 		SetSliderDialogRange(0, 100)
 		SetSliderDialogStartValue(valueDeflectChanceMul)
-		SetSliderDialogDefaultValue(10)
 		
 	elseif(option == sliderDeflectChanceMaxOID_S)
 		SetSliderDialogInterval(0.1)
 		SetSliderDialogRange(0, 100)
 		SetSliderDialogStartValue(valueDeflectChanceMax)
-		SetSliderDialogDefaultValue(50.0)
 		
 	elseif(option == sliderStaggerResetTimeOID_S)
 		SetSliderDialogInterval(0.01)
 		SetSliderDialogRange(1.0, 5)
 		SetSliderDialogStartValue(valueStaggerResetTime)
-		SetSliderDialogDefaultValue(2.0)
 		
 	elseif(option == sliderStaggerLimitOID_S)
 		SetSliderDialogInterval(1)
 		SetSliderDialogRange(1, 10)
 		SetSliderDialogStartValue(valueStaggerLimit)
-		SetSliderDialogDefaultValue(3)
 		
 	elseif(option == sliderStaggerDamageMaxOID_S)
 		SetSliderDialogInterval(1)
 		SetSliderDialogRange(25, 1000)
 		SetSliderDialogStartValue(valueStaggerDamageMax)
-		SetSliderDialogDefaultValue(200)
 	
+	elseif(option == sliderChargeDistMaxOID_S)
+		SetSliderDialogInterval(1)
+		SetSliderDialogRange(0, 500)
+		SetSliderDialogStartValue(valueChargeDistMax)
+		
+	elseif(option == sliderAimCompensationStrengthOID_S)
+		SetSliderDialogInterval(0.01)
+		SetSliderDialogRange(0.01, 5)
+		SetSliderDialogStartValue(valueAimCompensationStrength)
+		
+	elseif(option == sliderChargeVelocityOID_S)
+		SetSliderDialogInterval(1)
+		SetSliderDialogRange(100, 1000)
+		SetSliderDialogStartValue(valueChargeVelocity)
+		
 	endif
 endEvent
 
@@ -476,10 +526,10 @@ event OnOptionSliderAccept(int option, float value)
 		SetSliderOptionValue(sliderCustomROID_S, valueCustomR, "x {2}")
 		UpdateSaveConfig(Game.GetPlayer().GetEquippedWeapon(false).GetFormID(), 9, valueCustomR)
 		
-	elseif(option == sliderChargeMulOID_S)
-		valueChargeMul = value
-		SetSliderOptionValue(sliderChargeMulOID_S, valueChargeMul, "x {2}")
-		UpdateSaveConfig(0, 12, valueChargeMul)
+	elseif(option == sliderActivationRangeMulOID_S)
+		valueActivationRangeMul = value
+		SetSliderOptionValue(sliderActivationRangeMulOID_S, valueActivationRangeMul, "x {2}")
+		UpdateSaveConfig(0, 12, valueActivationRangeMul)
 		
 	elseif(option == sliderDeflectChanceMulOID_S)
 		valueDeflectChanceMul = value
@@ -505,6 +555,21 @@ event OnOptionSliderAccept(int option, float value)
 		valueStaggerDamageMax = value
 		SetSliderOptionValue(sliderStaggerDamageMaxOID_S, valueStaggerDamageMax, "{0}")
 		UpdateSaveConfig(0, 19, valueStaggerDamageMax)
+		
+	elseif(option == sliderChargeDistMaxOID_S)
+		valueChargeDistMax = value
+		SetSliderOptionValue(sliderChargeDistMaxOID_S, valueChargeDistMax, "{0}")
+		UpdateSaveConfig(0, 21, valueChargeDistMax)
+		
+	elseif(option == sliderAimCompensationStrengthOID_S)
+		valueAimCompensationStrength = value
+		SetSliderOptionValue(sliderAimCompensationStrengthOID_S, valueAimCompensationStrength, "{2}")
+		UpdateSaveConfig(0, 22, valueAimCompensationStrength)
+		
+	elseif(option == sliderChargeVelocityOID_S)
+		valueChargeVelocity = value
+		SetSliderOptionValue(sliderChargeVelocityOID_S, valueChargeVelocity, "{0}")
+		UpdateSaveConfig(0, 24, valueChargeVelocity)
 		
 	endif
 endEvent

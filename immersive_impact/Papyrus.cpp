@@ -11,8 +11,6 @@
 #include "HitFeedback.h"
 
 namespace BingleImmersiveImpact {
-	float speedValues[ConfigType::EndOfEnumMarker];
-	float chargeMul = 1.0f;
 	bool customizedL = false;
 	bool customizedR = false;
 	bool speedAdjustmentEnabled = true;
@@ -29,34 +27,34 @@ namespace BingleImmersiveImpact {
 	void ModifyAttackSpeedByTypes(TESObjectWEAP* wep, int weptype, bool right) {
 		//If the weapon is 2 handed
 		if (weptype == 5 || weptype == 6) {
-			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Swing2h] + speedValues[ConfigType::Speed_Offset]);
-			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Swing2h] + speedValues[ConfigType::Speed_LeftOffset]);
-			//_MESSAGE("2h %f", speedValues[ConfigType::Speed_Swing2h]);
+			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", configValues[ConfigType::Speed_Swing2h] + configValues[ConfigType::Speed_Offset]);
+			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", configValues[ConfigType::Speed_Swing2h] + configValues[ConfigType::Speed_LeftOffset]);
+			//_MESSAGE("2h %f", configValues[ConfigType::Speed_Swing2h]);
 		}
 
 		//If the weapon is 1 handed
 		else if (weptype == 1 || weptype == 3 || weptype == 4) {
 			if(right)
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Swing1h] + speedValues[ConfigType::Speed_Offset]);
+				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", configValues[ConfigType::Speed_Swing1h] + configValues[ConfigType::Speed_Offset]);
 			else
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Swing1h] + speedValues[ConfigType::Speed_LeftOffset]);
-			//_MESSAGE("1h %f", speedValues[ConfigType::Speed_Swing1h]);
+				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", configValues[ConfigType::Speed_Swing1h] + configValues[ConfigType::Speed_LeftOffset]);
+			//_MESSAGE("1h %f", configValues[ConfigType::Speed_Swing1h]);
 		}
 
 		//If the weapon is a dagger
 		else if (weptype == 2) {
 			if(right)
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_SwingDag] + speedValues[ConfigType::Speed_Offset]);
+				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", configValues[ConfigType::Speed_SwingDag] + configValues[ConfigType::Speed_Offset]);
 			else
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_SwingDag] + speedValues[ConfigType::Speed_LeftOffset]);
-			//_MESSAGE("dag %f", speedValues[ConfigType::Speed_SwingDag]);
+				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", configValues[ConfigType::Speed_SwingDag] + configValues[ConfigType::Speed_LeftOffset]);
+			//_MESSAGE("dag %f", configValues[ConfigType::Speed_SwingDag]);
 		}
 
 		//Bare hands!
 		else if (weptype == 0) {
-			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_SwingFist] + speedValues[ConfigType::Speed_Offset]);
-			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_SwingFist] + speedValues[ConfigType::Speed_LeftOffset]);
-			//_MESSAGE("fist %f", speedValues[ConfigType::Speed_SwingFist]);
+			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", configValues[ConfigType::Speed_SwingFist] + configValues[ConfigType::Speed_Offset]);
+			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", configValues[ConfigType::Speed_SwingFist] + configValues[ConfigType::Speed_LeftOffset]);
+			//_MESSAGE("fist %f", configValues[ConfigType::Speed_SwingFist]);
 		}
 	}
 
@@ -77,64 +75,6 @@ namespace BingleImmersiveImpact {
 		speedAdjustmentEnabled = b;
 	}
 
-	float GetDefault(ConfigType c) {
-		switch (c) {
-			case ConfigType::Speed_Pre:
-				return 0.6f;
-			case ConfigType::Speed_Swing1h:
-				return 1.5f;
-			case ConfigType::Speed_Swing2h:
-				return 1.8f;
-			case ConfigType::Speed_SwingDag:
-				return 1.1f;
-			case ConfigType::Speed_SwingFist:
-				return 1.3f;
-			case ConfigType::Speed_Post:
-				return 1.25f;
-			case ConfigType::RestrainMovement:
-				return 0;
-			case ConfigType::AimHelper:
-				return 0;
-			case ConfigType::ChargeMul:
-				return 1.0f;
-			case ConfigType::HitFeedback:
-				return 0;
-			case ConfigType::SpeedAdjustment:
-				return 1;
-			case ConfigType::DeflectChanceMul:
-				return 0.1f;
-			case ConfigType::DeflectChanceMax:
-				return 50.0f;
-			case ConfigType::StaggerResetTime:
-				return 2.0f;
-			case ConfigType::StaggerLimit:
-				return 3.0f;
-			case ConfigType::StaggerDamageMax:
-				return 200.0f;
-			case ConfigType::StaggerAny:
-				return 0;
-		}
-	}
-
-	void UpdateFromConfig(ConfigType configtype, float v) {
-		if (configtype < ConfigType::RestrainMovement)
-			speedValues[configtype] = v;
-		else if (configtype == ConfigType::ChargeMul)
-			chargeMul = v;
-		else if (configtype == ConfigType::DeflectChanceMul)
-			HitFeedback::deflectChanceMul = v;
-		else if (configtype == ConfigType::DeflectChanceMax)
-			HitFeedback::deflectChanceMax = v;
-		else if (configtype == ConfigType::StaggerResetTime)
-			HitFeedback::staggerResetTime = v;
-		else if (configtype == ConfigType::StaggerLimit)
-			HitFeedback::staggerLimit = v;
-		else if (configtype == ConfigType::StaggerDamageMax)
-			HitFeedback::staggerDamageMax = v;
-		else if (configtype == ConfigType::StaggerAny)
-			HitFeedback::staggerAny = v;
-	}
-
 
 #pragma region PAPYRUS_FUNCTIONS
 
@@ -146,8 +86,8 @@ namespace BingleImmersiveImpact {
 		if (event == s_as) {
 			if (!speedAdjustmentEnabled)
 				return;
-			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_Offset]);
-			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_LeftOffset]);
+			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", configValues[ConfigType::Speed_Pre] + configValues[ConfigType::Speed_Offset]);
+			ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", configValues[ConfigType::Speed_Pre] + configValues[ConfigType::Speed_LeftOffset]);
 		}
 
 		//If the event is preHitFrame
@@ -158,8 +98,8 @@ namespace BingleImmersiveImpact {
 				ActorModifier::SetBaseAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", 1);
 				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", 1);
 				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", 1);
-				speedValues[ConfigType::Speed_Offset] = 1 - ActorModifier::GetAV((Actor*)(*g_thePlayer), "WeaponSpeedMult");
-				speedValues[ConfigType::Speed_LeftOffset] = 1 - ActorModifier::GetAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult");
+				configValues[ConfigType::Speed_Offset] = 1 - ActorModifier::GetAV((Actor*)(*g_thePlayer), "WeaponSpeedMult");
+				configValues[ConfigType::Speed_LeftOffset] = 1 - ActorModifier::GetAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult");
 
 				tList<ActiveEffect>* list_ae = ((Actor*)(*g_thePlayer))->magicTarget.GetActiveEffects();
 				tList<ActiveEffect>::Iterator it = list_ae->Begin();
@@ -167,14 +107,14 @@ namespace BingleImmersiveImpact {
 					ActiveEffect* ae = it.Get();
 					//Instead of looking for specific for ids, look for what actorvalue does this ActiveEffect change.
 					if (ae->actorValue == LookupActorValueByName("WeaponSpeedMult")) {
-						speedValues[ConfigType::Speed_Offset] += ae->magnitude - 1;
-						speedValues[ConfigType::Speed_LeftOffset] += ae->magnitude - 1;
+						configValues[ConfigType::Speed_Offset] += ae->magnitude - 1;
+						configValues[ConfigType::Speed_LeftOffset] += ae->magnitude - 1;
 					}
 					++it;
 				}
 
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_Offset]);
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Pre] + speedValues[ConfigType::Speed_LeftOffset]);
+				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", configValues[ConfigType::Speed_Pre] + configValues[ConfigType::Speed_Offset]);
+				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", configValues[ConfigType::Speed_Pre] + configValues[ConfigType::Speed_LeftOffset]);
 			}
 
 			//Tried OnActorAction, but it sucks. I figured this way is more reliable.
@@ -183,7 +123,7 @@ namespace BingleImmersiveImpact {
 
 			float wepReach = EquipWatcher::isTwoHanded ? ((TESObjectWEAP*)(Actor*)(*g_thePlayer)->GetEquippedObject(false))->reach() : 1.0f;
 			float minRange = max((*g_thePlayer)->race->data.handReach, 60.0f);
-			float maxRange = (*g_thePlayer)->race->data.handReach * 3.0f * chargeMul * wepReach;
+			float maxRange = (*g_thePlayer)->race->data.handReach * 1.5f * configValues[ConfigType::ActivationRangeMul] * wepReach;
 			ActorModifier::LockAim(minRange, maxRange);
 		}
 
@@ -193,7 +133,7 @@ namespace BingleImmersiveImpact {
 				//If the event is weaponSwing
 				if (event == s_sw) {
 					if (customizedR) {
-						ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_CustomR_Swing] + speedValues[ConfigType::Speed_Offset]);
+						ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", configValues[ConfigType::Speed_CustomR_Swing] + configValues[ConfigType::Speed_Offset]);
 					}
 					else if ((Actor*)(*g_thePlayer)->GetEquippedObject(false)) {
 						TESObjectWEAP* wep = ((TESObjectWEAP*)(Actor*)(*g_thePlayer)->GetEquippedObject(false));
@@ -204,7 +144,7 @@ namespace BingleImmersiveImpact {
 				//If the event is weaponLeftSwing
 				else if (event == s_lsw) {
 					if (customizedL) {
-						ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_CustomL_Swing] + speedValues[ConfigType::Speed_LeftOffset]);
+						ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", configValues[ConfigType::Speed_CustomL_Swing] + configValues[ConfigType::Speed_LeftOffset]);
 					}
 					else if ((Actor*)(*g_thePlayer)->GetEquippedObject(true)) {
 						TESObjectWEAP* wep = ((TESObjectWEAP*)(Actor*)(*g_thePlayer)->GetEquippedObject(true));
@@ -218,9 +158,9 @@ namespace BingleImmersiveImpact {
 		//If the event is AttackWinStart or AttackWinStartLeft
 		else if (event == s_post || event == s_lpost) {
 			if (speedAdjustmentEnabled) {
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", speedValues[ConfigType::Speed_Post] + speedValues[ConfigType::Speed_Offset]);
-				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", speedValues[ConfigType::Speed_Post] + speedValues[ConfigType::Speed_LeftOffset]);
-				//_MESSAGE("post %f", speedValues[ConfigType::Speed_Post]);
+				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "WeaponSpeedMult", configValues[ConfigType::Speed_Post] + configValues[ConfigType::Speed_Offset]);
+				ActorModifier::SetCurrentAV((Actor*)(*g_thePlayer), "LeftWeaponSpeedMult", configValues[ConfigType::Speed_Post] + configValues[ConfigType::Speed_LeftOffset]);
+				//_MESSAGE("post %f", configValues[ConfigType::Speed_Post]);
 			}
 
 			ActorModifier::RestrainMovement((Actor*)(*g_thePlayer), false);
@@ -242,11 +182,11 @@ namespace BingleImmersiveImpact {
 
 	void UpdateConfig(StaticFunctionTag* base, UInt32 formId, UInt32 configtype, float v) {
 		if (configtype < ConfigType::RestrainMovement) {
-			speedValues[configtype] = v;
+			configValues[configtype] = v;
 			if (configtype == ConfigType::Speed_CustomL_Swing) {
 				SetCustomized(0, true);
 				if ((Actor*)(*g_thePlayer)->GetEquippedObject(false) == (Actor*)(*g_thePlayer)->GetEquippedObject(true)) {
-					speedValues[ConfigType::Speed_CustomR_Swing] = v;
+					configValues[ConfigType::Speed_CustomR_Swing] = v;
 					SetCustomized(1, true);
 					BingleEventInvoker::SyncConfig(ConfigType::Speed_CustomR_Swing, v);
 				}
@@ -254,7 +194,7 @@ namespace BingleImmersiveImpact {
 			if (configtype == ConfigType::Speed_CustomR_Swing) {
 				SetCustomized(1, true);
 				if ((Actor*)(*g_thePlayer)->GetEquippedObject(false) == (Actor*)(*g_thePlayer)->GetEquippedObject(true)) {
-					speedValues[ConfigType::Speed_CustomL_Swing] = v;
+					configValues[ConfigType::Speed_CustomL_Swing] = v;
 					SetCustomized(0, true);
 					BingleEventInvoker::SyncConfig(ConfigType::Speed_CustomL_Swing, v);
 				}
@@ -266,32 +206,11 @@ namespace BingleImmersiveImpact {
 		else if (configtype == ConfigType::AimHelper)
 			ActorModifier::EnableAimHelper(v);
 
-		else if (configtype == ConfigType::ChargeMul)
-			chargeMul = v;
-
-		else if (configtype == ConfigType::HitFeedback)
+		else if (configtype == ConfigType::EnableHitFeedback)
 			HitFeedback::EnableFeedback(v);
 
-		else if (configtype == ConfigType::SpeedAdjustment)
-			speedAdjustmentEnabled = v;
-
-		else if (configtype == ConfigType::DeflectChanceMul)
-			HitFeedback::deflectChanceMul = v;
-
-		else if (configtype == ConfigType::DeflectChanceMax)
-			HitFeedback::deflectChanceMax = v;
-
-		else if (configtype == ConfigType::StaggerResetTime)
-			HitFeedback::staggerResetTime = v;
-
-		else if (configtype == ConfigType::StaggerLimit)
-			HitFeedback::staggerLimit = v;
-
-		else if (configtype == ConfigType::StaggerDamageMax)
-			HitFeedback::staggerDamageMax = v;
-
-		else if (configtype == ConfigType::StaggerAny)
-			HitFeedback::staggerAny = v;
+		else
+			configValues[configtype] = v;
 
 		ConfigHandler::SetConfig(formId, (ConfigType)configtype, v);
 	}
@@ -303,6 +222,10 @@ namespace BingleImmersiveImpact {
 	void UpdateSaveConfig(StaticFunctionTag* base, UInt32 formId, UInt32 configtype, float v) {
 		UpdateConfig(base, formId, configtype, v);
 		SaveConfig(base);
+	}
+
+	void ForceSyncConfig(StaticFunctionTag* base) {
+		EquipWatcher::OnFirstLoad();
 	}
 #pragma endregion
 }
@@ -322,5 +245,7 @@ bool Papyrus::RegisterFuncs(VMClassRegistry * registry) {
 		new NativeFunction3 <StaticFunctionTag, void, UInt32, UInt32, float>("UpdateSaveConfig", "BingleImmersiveFeedbackMCM", BingleImmersiveImpact::UpdateSaveConfig, registry));
 	registry->RegisterFunction(
 		new NativeFunction0 <StaticFunctionTag, void>("SaveConfig", "BingleImmersiveFeedbackMCM", BingleImmersiveImpact::SaveConfig, registry));
+	registry->RegisterFunction(
+		new NativeFunction0 <StaticFunctionTag, void>("ForceSyncConfig", "BingleImmersiveFeedbackMCM", BingleImmersiveImpact::ForceSyncConfig, registry));
 	return true;
 }

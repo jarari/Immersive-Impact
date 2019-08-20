@@ -11,7 +11,7 @@
 
 class BingleHitWaitNextFrame : public TaskDelegate {
 public:
-	static BingleHitWaitNextFrame* Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, float bowDivider, int wepType);
+	static BingleHitWaitNextFrame* Create(Actor* target, Actor* attacker, ActiveEffect* ae, TESHitEvent::Flags flags, bool isArrow, int wepType);
 	virtual void Run();
 	virtual void Dispose();
 	Actor* attacker;
@@ -19,7 +19,7 @@ public:
 private:
 	ActiveEffect* ae;
 	TESHitEvent::Flags flags;
-	float bowDivider;
+	bool isArrow;
 	int wepType;
 };
 
@@ -72,12 +72,6 @@ protected:
 public:
 	static std::vector<std::pair<Actor*, ActiveEffect*>> storedActiveEffects;
 	static float lastDamage;
-	static float deflectChanceMul;
-	static float deflectChanceMax;
-	static float staggerResetTime;
-	static float staggerLimit;
-	static float staggerDamageMax;
-	static float staggerAny;
 	HitFeedback();
 
 	static HitFeedback* GetInstance() {

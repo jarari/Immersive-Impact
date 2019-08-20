@@ -4,6 +4,7 @@
 #include "ActorModifier.h"
 #include "Papyrus.h"
 #include "BingleEventInvoker.h"
+#include "ConfigHandler.h"
 
 //This class is used to free the player from restraints if his attack got canceled.
 class WeaponSwingEventSink : public BSTEventSink<WeaponAttack::Event> {
@@ -17,6 +18,7 @@ enum {
 	Movement_Restrain
 };
 
+using namespace BingleImmersiveImpact;
 template<class T, UInt32 Type>
 UInt8 CustomHandlerFunctor<Actor, UInt32>::ProcessAction(Actor * actor, UInt32 unk04) {
 	if (actor != (Actor*)*g_thePlayer)
@@ -25,8 +27,8 @@ UInt8 CustomHandlerFunctor<Actor, UInt32>::ProcessAction(Actor * actor, UInt32 u
 	//ActorModifier::RestrainView(actor, false);
 	ActorModifier::UnlockAim();
 	BingleEventInvoker::StopTranslation();
-	ActorModifier::SetCurrentAV(actor, "WeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Pre] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Offset]);
-	ActorModifier::SetCurrentAV(actor, "LeftWeaponSpeedMult", BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_Pre] + BingleImmersiveImpact::speedValues[BingleImmersiveImpact::ConfigType::Speed_LeftOffset]);
+	ActorModifier::SetCurrentAV(actor, "WeaponSpeedMult", configValues[ConfigType::Speed_Pre] + configValues[ConfigType::Speed_Offset]);
+	ActorModifier::SetCurrentAV(actor, "LeftWeaponSpeedMult", configValues[ConfigType::Speed_Pre] + configValues[ConfigType::Speed_LeftOffset]);
 	return CALL_MEMBER_FN(static_cast<T*>(this), Process_Origin)(actor, unk04);
 }
 
