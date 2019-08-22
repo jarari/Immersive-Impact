@@ -190,21 +190,21 @@ void SetMatrix33(float a, float b, float c, float d, float e, float f, float g, 
 }
 
 void GetRefForward(float pitch, float yaw, float roll, NiPoint3* vec) {
-	NiMatrix33 m_roll;
-	SetMatrix33(cos(roll), -sin(roll), 0,
-		sin(roll), cos(roll), 0,
-		0, 0, 1,
-		m_roll);
-	NiMatrix33 m_pitch;
-	SetMatrix33(1, 0, 0,
-		0, cos(pitch), -sin(pitch),
-		0, sin(pitch), cos(pitch),
-		m_pitch);
 	NiMatrix33 m_yaw;
-	SetMatrix33(cos(yaw), 0, sin(yaw),
-		0, 1, 0,
-		-sin(yaw), 0, cos(yaw),
-		m_yaw);
+	SetMatrix33(cos(yaw),		-sin(yaw),			0,
+				sin(yaw),		cos(yaw),			0,
+				0,				0,					1,
+				m_yaw);
+	NiMatrix33 m_roll;
+	SetMatrix33(1,				0,					0,
+				0,				cos(roll),			-sin(roll),
+				0,				sin(roll),			cos(roll),
+				m_roll);
+	NiMatrix33 m_pitch;
+	SetMatrix33(cos(pitch),		0,					sin(pitch),
+				0,				1,					0,
+				-sin(pitch),	0,					cos(pitch),
+				m_pitch);
 	NiPoint3 fwd = m_yaw * m_pitch * m_roll * NiPoint3(1, 0, 0);
 	vec->x = fwd.x;
 	vec->y = fwd.y;

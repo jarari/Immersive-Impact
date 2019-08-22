@@ -26,6 +26,7 @@ UInt8 CustomHandlerFunctor<Actor, UInt32>::ProcessAction(Actor * actor, UInt32 u
 	ActorModifier::RestrainMovement(actor, false);
 	//ActorModifier::RestrainView(actor, false);
 	ActorModifier::UnlockAim();
+	BingleEventInvoker::TranslateToTarget((Actor*)*g_thePlayer);
 	BingleEventInvoker::StopTranslation();
 	ActorModifier::SetCurrentAV(actor, "WeaponSpeedMult", configValues[ConfigType::Speed_Pre] + configValues[ConfigType::Speed_Offset]);
 	ActorModifier::SetCurrentAV(actor, "LeftWeaponSpeedMult", configValues[ConfigType::Speed_Pre] + configValues[ConfigType::Speed_LeftOffset]);
