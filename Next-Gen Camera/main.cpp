@@ -4,6 +4,7 @@
 #include <shlobj.h>				// CSIDL_MYCODUMENTS
 #include <string>
 #include <thread>
+#include <Next-Gen Camera\MenuCloseWatcher.h>
 using std::string;
 static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
 std::string PLUGIN_NAME = "Next-Gen Camera";
@@ -48,6 +49,8 @@ extern "C" {
 	//On plugin load
 	bool SKSEPlugin_Load(const SKSEInterface* skse) {	// Called by SKSE to load this plugin
 		_MESSAGE((PLUGIN_NAME + ((string)" loaded")).c_str());
+
+		MenuCloseWatcher::InitHook();
 
 		std::thread cameraThread(CameraController::MainBehavior);
 		cameraThread.detach();

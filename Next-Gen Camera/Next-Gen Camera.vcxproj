@@ -134,10 +134,12 @@
   <ItemGroup>
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MenuCloseWatcher.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="MenuCloseWatcher.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>

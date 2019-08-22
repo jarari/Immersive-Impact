@@ -19,6 +19,7 @@ protected:
 	static NiPoint3 camBase;
 	static NiPoint3 lastPlayerPos;
 public:
+	static bool hookActive;
 	static int tickRate;
 	static void MainBehavior();
 	CameraController* GetInstance() {

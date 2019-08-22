@@ -7,6 +7,7 @@
 using namespace Utils;
 
 int CameraController::tickRate = 66;
+bool CameraController::hookActive = false;
 CameraController* CameraController::instance = nullptr;
 NiPoint3 CameraController::camTargetPos;
 NiPoint3 CameraController::camVanillaPos;
@@ -36,65 +37,68 @@ void CameraController::MainBehavior() {
 	camBase = NiPoint3();
 	lastPlayerPos = NiPoint3();
 	while (running) {
-		PlayerCamera* pCam = PlayerCamera::GetSingleton();
-		if (pCam) {
-			TESCameraState* pCamState = pCam->cameraState; 
-			PlayerCharacter* player = *g_thePlayer;
-			if (pCamState && player && player->GetNiNode()) {
-				if (pCamState != lastState) {
-					_MESSAGE("State changed");
-					std::this_thread::sleep_for(std::chrono::microseconds(1000000));
-					lastState = pCamState;
-					if(Scale(camCurrentPos) == 0)
-						camCurrentPos = player->pos + NiPoint3(0, 0, 121);
-					camTargetPos = camCurrentPos;
-					lastPlayerPos = player->pos;
-					continue;
-				}
-				bool processCam = true;
-				bool behaviorExists = false;
-				if (pCamState == pCam->cameraStates[PlayerCamera::kCameraState_ThirdPerson2]) {
-					processCam = ThirdPersonBehavior((ThirdPersonState*)pCamState);
-					behaviorExists = true;
-				}
-				else if (pCamState == pCam->cameraStates[PlayerCamera::kCameraState_Horse]) {
-					processCam = HorseBehavior((HorseCameraState*)pCamState);
-					behaviorExists = true;
-				}
-
-				if (!behaviorExists || player->flags2.killMove) {
-					processCam = false;
-					_MESSAGE("Don't process");
-				}
-
-
-				if (processCam) {
-					NiPoint3 deltaCam = (camTargetPos - camCurrentPos) / fCamSmooth;
-					float scale = Scale(deltaCam);
-					if (scale < fCamDeltaMin) {
-						if (Scale((camTargetPos - camCurrentPos)) > fCamDeltaMin)
-							deltaCam = deltaCam / scale * fCamDeltaMin;
-						else
-							deltaCam = camTargetPos - camCurrentPos;
+		if (hookActive) {
+			PlayerCamera* pCam = PlayerCamera::GetSingleton();
+			if (pCam) {
+				TESCameraState* pCamState = pCam->cameraState;
+				PlayerCharacter* player = *g_thePlayer;
+				if (pCamState && player && player->GetNiNode()) {
+					bool processCam = true;
+					if (pCamState != lastState) {
+						_MESSAGE("State changed");
+						lastState = pCamState;
+						if (Scale(camCurrentPos) == 0)
+							camCurrentPos = player->pos + NiPoint3(0, 0, 121);
+						camTargetPos = camCurrentPos;
+						lastPlayerPos = player->pos;
+						processCam = false;
 					}
-					camCurrentPos += deltaCam;
+					bool behaviorExists = false;
+					if (pCamState == pCam->cameraStates[PlayerCamera::kCameraState_ThirdPerson2]) {
+						processCam = ThirdPersonBehavior((ThirdPersonState*)pCamState);
+						behaviorExists = true;
+					}
+					else if (pCamState == pCam->cameraStates[PlayerCamera::kCameraState_Horse]) {
+						processCam = HorseBehavior((HorseCameraState*)pCamState);
+						behaviorExists = true;
+					}
 
-					//TODO: Calculate world position -> convert to local position using variables
-					NiMatrix33 playerRot = GetRotationMatrix33(player->rot.x, player->rot.y, player->rot.z);
-					NiPoint3 l_currpos = WorldToLocal(camCurrentPos, camVanillaBase, playerRot);
-					NiPoint3 l_vanillapos = WorldToLocal(camVanillaPos, camVanillaBase, playerRot);
-					NiPoint3 l_delta = l_currpos - l_vanillapos;
-					*(float*)((UInt32)pCamState + 0x3C) = l_delta.x;
-					*(float*)((UInt32)pCamState + 0x40) = l_delta.y;
-					*(float*)((UInt32)pCamState + 0x44) = l_delta.z;
+					if (!behaviorExists || player->flags2.killMove) {
+						processCam = false;
+						_MESSAGE("Don't process");
+					}
+
+
+					if (processCam) {
+						//Disable sprint effect
+						*(float*)((UInt32)pCamState + 0xA4) = 0.0f;
+						*(float*)((UInt32)pCamState + 0xA8) = 0.0f;
+
+						NiPoint3 deltaCam = (camTargetPos - camCurrentPos) / fCamSmooth;
+						float scale = Scale(deltaCam);
+						if (scale < fCamDeltaMin) {
+							if (Scale((camTargetPos - camCurrentPos)) > fCamDeltaMin)
+								deltaCam = deltaCam / scale * fCamDeltaMin;
+							else
+								deltaCam = camTargetPos - camCurrentPos;
+						}
+						camCurrentPos += deltaCam;
+
+						//TODO: Calculate world position -> convert to local position using variables
+						NiMatrix33 playerRot = GetRotationMatrix33(player->rot.x, player->rot.y, player->rot.z);
+						NiPoint3 l_currpos = WorldToLocal(camCurrentPos, camVanillaBase, player->GetNiNode()->m_worldTransform.rot);
+						NiPoint3 l_vanillapos = WorldToLocal(camVanillaPos, camVanillaBase, player->GetNiNode()->m_worldTransform.rot);
+						NiPoint3 l_delta = l_currpos - l_vanillapos;
+						*(float*)((UInt32)pCamState + 0x3C) = l_delta.x;
+						*(float*)((UInt32)pCamState + 0x40) = l_delta.y;
+						*(float*)((UInt32)pCamState + 0x44) = l_delta.z;
+					}
+					lastPlayerPos = player->pos;
 				}
-				else {
-					*(float*)((UInt32)pCamState + 0x3C) = 0;
-					*(float*)((UInt32)pCamState + 0x40) = 0;
-					*(float*)((UInt32)pCamState + 0x44) = 0;
-				}
-				lastPlayerPos = player->pos;
 			}
+		}
+		else {
+			lastState = nullptr;
 		}
 		std::this_thread::sleep_for(std::chrono::microseconds(1000000 / tickRate));
 	}
@@ -118,7 +122,7 @@ float fHorseMagicOffsetZ = 15.0f;
 float fHorseBowOffsetX = 35.0f;
 float fHorseBowOffsetZ = 15.0f;
 
-float fCamVelocityStrength = 3.0f;
+float fCamVelocityStrength = 10.0f;
 
 float GetZoom(TESCameraState* st) {
 	return *(float*)((UInt32)st + 0x58);
@@ -130,10 +134,10 @@ float GetZoom(TESCameraState* st) {
 //CamState + 0x3C = fOverShoulderPosX, 0x48 = current PosX, 0x44 = fOverShoulderPosZ, 0x50 = current PosZ
 bool CameraController::ThirdPersonBehavior(ThirdPersonState* pCamState) {
 	PlayerCharacter* player = *g_thePlayer;
-	if (!pCamState->cameraNode)
+	if (!pCamState->cameraNode || !pCamState->camera)
 		return false;
 	camVanillaBase = player->pos + NiPoint3(0, 0, pCamState->cameraNode->m_localTransform.pos.z);
-	camBase = LocalToWorld(NiPoint3(fIdleOffsetX, 0, fIdleOffsetZ), player->pos, GetRotationMatrix33(player->rot.x, player->rot.y, player->rot.z))
+	camBase = LocalToWorld(NiPoint3(fIdleOffsetX, 0, fIdleOffsetZ), player->pos, player->GetNiNode()->m_worldTransform.rot)
 		+ NiPoint3(0, 0, pCamState->cameraNode->m_localTransform.pos.z);
 	NiPoint3 camFwd;
 	GetCameraForward(pCamState->camera, &camFwd);
@@ -160,14 +164,14 @@ Actor* GetCurrentHorse() {
 
 bool CameraController::HorseBehavior(HorseCameraState* pCamState) {
 	PlayerCharacter* player = *g_thePlayer;
-	if (!pCamState->cameraNode)
+	if (!pCamState->cameraNode || !pCamState->camera)
 		return false;
 	Actor* horse = GetCurrentHorse();
 	if (!horse)
 		return false;
 	float saddleOffsetZ = CALL_MEMBER_FN((ActorEx*)horse, GetSaddleOffsetZ)();
-	camVanillaBase = player->pos + NiPoint3(0, 0, saddleOffsetZ);
-	camBase = LocalToWorld(NiPoint3(fHorseIdleOffsetX, 0, fHorseIdleOffsetZ), horse->pos, GetRotationMatrix33(horse->rot.x, horse->rot.y, horse->rot.z))
+	camVanillaBase = horse->pos + NiPoint3(0, 0, saddleOffsetZ);
+	camBase = LocalToWorld(NiPoint3(fHorseIdleOffsetX, 0, fHorseIdleOffsetZ), horse->pos, player->GetNiNode()->m_worldTransform.rot)
 		+ NiPoint3(0, 0, saddleOffsetZ);
 	NiPoint3 camFwd;
 	GetCameraForward(pCamState->camera, &camFwd);
