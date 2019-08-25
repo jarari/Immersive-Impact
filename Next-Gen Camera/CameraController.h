@@ -18,9 +18,12 @@ protected:
 	static NiPoint3 camVanillaBase;
 	static NiPoint3 camBase;
 	static NiPoint3 lastPlayerPos;
+	static NiPoint3 playerVelocity;
+	static float smoothingEnforcer;
+	static float offsetX;
+	static float offsetZ;
 public:
 	static bool hookActive;
-	static int tickRate;
 	static void MainBehavior();
 	CameraController* GetInstance() {
 		return instance;

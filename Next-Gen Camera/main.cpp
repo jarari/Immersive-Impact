@@ -1,13 +1,16 @@
 #include "CameraController.h"
+#include "ConfigHandler.h"
+#include "MenuCloseWatcher.h"
+#include "Papyrus.h"
 #include "skse/PluginAPI.h"		// super
 #include "skse/skse_version.h"	// What version of SKSE is running?
 #include <shlobj.h>				// CSIDL_MYCODUMENTS
 #include <string>
 #include <thread>
-#include <Next-Gen Camera\MenuCloseWatcher.h>
 using std::string;
 static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
 std::string PLUGIN_NAME = "Next-Gen Camera";
+static SKSEPapyrusInterface* g_papyrus = NULL;
 
 extern "C" {
 
@@ -50,7 +53,11 @@ extern "C" {
 	bool SKSEPlugin_Load(const SKSEInterface* skse) {	// Called by SKSE to load this plugin
 		_MESSAGE((PLUGIN_NAME + ((string)" loaded")).c_str());
 
+		g_papyrus = (SKSEPapyrusInterface*)skse->QueryInterface(kInterface_Papyrus);
+		g_papyrus->Register(Papyrus::RegisterFuncs);
 		MenuCloseWatcher::InitHook();
+		ConfigHandler::InitHandler();
+		ConfigHandler::LoadConfig();
 
 		std::thread cameraThread(CameraController::MainBehavior);
 		cameraThread.detach();

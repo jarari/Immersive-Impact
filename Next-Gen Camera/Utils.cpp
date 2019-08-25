@@ -2,6 +2,12 @@
 #include <SKSE/NiNodes.h>
 #include <SKSE/NiObjects.h>
 #include <SKSE/GameCamera.h>
+#include <SKSE/GameObjects.h>
+#include <SKSE/GameReferences.h>
+
+using std::vector;
+using std::pair;
+std::vector<std::pair<Actor*, ActiveEffect*>> storedActiveEffects;
 
 float Utils::Scale(NiPoint3 vec) {
 	return sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
@@ -104,4 +110,39 @@ NiPoint3 Utils::WorldToLocal(NiPoint3 wpos, NiPoint3 lorigin, NiMatrix33 rot) {
 
 NiPoint3 Utils::LocalToWorld(NiPoint3 lpos, NiPoint3 lorigin, NiMatrix33 rot) {
 	return rot * lpos + lorigin;
+}
+
+ActiveEffect* Utils::GetActiveEffectFromActor(Actor* actor) {
+	if (!actor || !actor->GetNiNode())
+		return nullptr;
+	for (vector<pair<Actor*, ActiveEffect*>>::iterator
+		it = storedActiveEffects.begin();
+		it != storedActiveEffects.end();) {
+		pair<Actor*, ActiveEffect*> p = *it;
+		if (p.first != nullptr && p.first->IsDead(1) == false && p.second->reference == (TESObjectREFR*)&p.first->magicTarget) {
+			if (p.first == actor) {
+				_MESSAGE("Got ActiveEffect from stored data.");
+				return p.second;
+			}
+			it++;
+		}
+		else {
+			it = storedActiveEffects.erase(it);
+		}
+	}
+	tList<ActiveEffect>* list_ae = actor->magicTarget.GetActiveEffects();
+	tList<ActiveEffect>::Iterator it = list_ae->Begin();
+	if (list_ae->Count() == 0)
+		return nullptr;
+	while (!it.End()) {
+		ActiveEffect* ae = it.Get();
+		const char* fullname = ae->effect->mgef->fullName.name.data;
+		if (fullname != nullptr && strlen(fullname) > 0 && strcmp(fullname, "BingleNGCHelper") == 0) {
+			storedActiveEffects.push_back(pair<Actor*, ActiveEffect*>(actor, ae));
+			_MESSAGE("Found ActiveEffect from actor.");
+			return ae;
+		}
+		++it;
+	}
+	return nullptr;
 }

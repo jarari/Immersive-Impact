@@ -1,7 +1,10 @@
 #pragma once
+#include <vector>
+class Actor;
 class NiMatrix33;
 class NiPoint3;
 class TESCamera;
+class ActiveEffect;
 namespace Utils {
 	float Scale(NiPoint3 vec);
 	void NormalizeVector(float& x, float& y, float& z);
@@ -13,4 +16,5 @@ namespace Utils {
 	NiMatrix33 Inverse(NiMatrix33 mat);
 	NiPoint3 WorldToLocal(NiPoint3 wpos, NiPoint3 lorigin, NiMatrix33 rot);
 	NiPoint3 LocalToWorld(NiPoint3 lpos, NiPoint3 lorigin, NiMatrix33 rot);
+	ActiveEffect* GetActiveEffectFromActor(Actor* actor);
 }
