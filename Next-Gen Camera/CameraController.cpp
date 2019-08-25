@@ -249,7 +249,6 @@ bool CameraController::ThirdPersonBehavior(ThirdPersonState* pCamState) {
 					(*(TESForm**)((UInt32)player->magicCaster[0]->magicItem + 0x54))->formID != 0x13F45) { //Not dual casting (w/ perk) AND not casting a two-handed spell
 					magicOffsetX -= standing ? configValues[fMagicOffsetX] : configValues[fSneakMagicOffsetX];
 				}
-				
 			}
 			if (player->magicCaster[1] && 
 				(CompareFlags(player->magicCaster[1]->unk18, State_MagicCastingStart) || 
