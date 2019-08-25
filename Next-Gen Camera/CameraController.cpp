@@ -243,11 +243,10 @@ bool CameraController::ThirdPersonBehavior(ThirdPersonState* pCamState) {
 				(CompareFlags(player->magicCaster[0]->unk18, State_MagicCastingStart) || 
 					CompareFlags(player->magicCaster[0]->unk18, State_MagicCasting) ||
 					CompareFlags(player->magicCaster[0]->unk18, State_MagicChannelingStart) ||
-					CompareFlags(player->magicCaster[0]->unk18, State_MagicChannelingReady)) &&
-				player->magicCaster[0]->magicItem && *(UInt32*)((UInt32)player->magicCaster[0]->magicItem + 0x80) >= 0x2) { //Delivery type Aimed, Target Actor, Target Location
+					CompareFlags(player->magicCaster[0]->unk18, State_MagicChannelingReady))) {
 				casting = true;
 				if (*(UInt32*)((UInt32)player->magicCaster[0] + 0x8C) == 0x8 &&
-					(*(TESForm**)((UInt32)player->magicCaster[0] + 0x54))->formID != 0x13F45) { //Not dual casting (w/ perk) AND not casting a two-handed spell
+					(*(TESForm**)((UInt32)player->magicCaster[0]->magicItem + 0x54))->formID != 0x13F45) { //Not dual casting (w/ perk) AND not casting a two-handed spell
 					magicOffsetX -= standing ? configValues[fMagicOffsetX] : configValues[fSneakMagicOffsetX];
 				}
 				
@@ -256,8 +255,7 @@ bool CameraController::ThirdPersonBehavior(ThirdPersonState* pCamState) {
 				(CompareFlags(player->magicCaster[1]->unk18, State_MagicCastingStart) || 
 					CompareFlags(player->magicCaster[1]->unk18, State_MagicCasting) ||
 					CompareFlags(player->magicCaster[1]->unk18, State_MagicChannelingStart) ||
-					CompareFlags(player->magicCaster[1]->unk18, State_MagicChannelingReady)) &&
-				player->magicCaster[1]->magicItem && *(UInt32*)((UInt32)player->magicCaster[1]->magicItem + 0x80) >= 0x2) {
+					CompareFlags(player->magicCaster[1]->unk18, State_MagicChannelingReady))) {
 				casting = true;
 				magicOffsetX += standing ? configValues[fMagicOffsetX] : configValues[fSneakMagicOffsetX];
 			}
