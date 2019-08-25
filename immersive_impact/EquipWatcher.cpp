@@ -109,8 +109,10 @@ EventResult EquipWatcher::ReceiveEvent(TESEquipEvent * evn, EventDispatcher<TESE
 			
 			if (equipment && equipment->GetFormType() == FormType::kFormType_Weapon) {
 				if (evn->unk_03 & 0x10000) {
-					if (((Actor*)(evn->unk_00))->GetEquippedObject(false) == ((Actor*)(evn->unk_00))->GetEquippedObject(false))
+					if (((Actor*)(evn->unk_00))->GetEquippedObject(false) == ((Actor*)(evn->unk_00))->GetEquippedObject(true))
 						isTwoHanded = true;
+					else
+						isTwoHanded = false;
 					if (((Actor*)(evn->unk_00))->GetEquippedObject(false) == equipment)
 						ConfigHandler::LoadConfig(equipment->formID, ((TESObjectWEAP*)equipment)->type(), 1);
 					if (((Actor*)(evn->unk_00))->GetEquippedObject(true) == equipment)
