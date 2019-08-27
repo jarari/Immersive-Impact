@@ -502,6 +502,11 @@ void BingleStaggerWaitNextFrame::Run() {
 		target->flags2.killMove ||
 		target->IsDead(1))
 		return;
+	bool dontMove = *(UInt32*)((UInt32)target->processManager + 0x5C) & 0x4 == 0x4;
+	bool isBleedingOut = false;
+	target->animGraphHolder.GetAnimationVariableBool("IsBleedingOut", isBleedingOut);
+	if (dontMove || isBleedingOut)
+		return;
 	target->animGraphHolder.SendAnimationEvent("staggerStart");
 }
 
