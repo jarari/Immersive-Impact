@@ -37,9 +37,9 @@ void AimHelperThread::StartThread() {
 }
 
 void AimHelperThread::StopThread() {
-	isRunning = false;
 	if (_t.joinable() && isRunning) {
 		_t.join();
 		_t.std::thread::~thread();
 	}
+	isRunning = false;
 }
