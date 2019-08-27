@@ -44,7 +44,7 @@ extern "C"	{
 		sprintf_s(logfilename, "\\My Games\\Skyrim\\SKSE\\%s.log", PLUGIN_NAME);
 		gLog.OpenRelative(CSIDL_MYDOCUMENTS, logfilename);
 		gLog.SetPrintLevel(IDebugLog::kLevel_Error);
-		gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
+		gLog.SetLogLevel(IDebugLog::kLevel_FatalError);
 
 		// populate info structure
 		info->infoVersion =	PluginInfo::kInfoVersion;
