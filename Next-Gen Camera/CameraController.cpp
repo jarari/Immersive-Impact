@@ -2,6 +2,7 @@
 #include "ConfigHandler.h"
 #include "Utils.h"
 #include <SKSE/GameObjects.h>
+#include <SKSE/GameRTTI.h>
 #include <SKSE/NiNodes.h>
 #include <thread>
 #include <chrono>
@@ -56,7 +57,8 @@ void CameraController::MainBehavior() {
 					if (pCamState != lastState) {
 						_MESSAGE("State changed");
 						lastState = pCamState;
-						camCurrentPos = player->pos + NiPoint3(0, 0, 121);
+						if(Scale(camCurrentPos) == 0)
+							camCurrentPos = player->pos + NiPoint3(0, 0, 121);
 						camTargetPos = camCurrentPos;
 						lastPlayerPos = player->pos;
 						processCam = false;
@@ -91,8 +93,13 @@ void CameraController::MainBehavior() {
 						processCam = HorseBehavior((HorseCameraState*)pCamState);
 						behaviorExists = true;
 					}
+					else {
+						camCurrentPos = NiPoint3(*(float*)((UInt32)pCam + 0xB4),
+												*(float*)((UInt32)pCam + 0xB8),
+												*(float*)((UInt32)pCam + 0xBC));
+					}
 
-					if (!behaviorExists || player->flags2.killMove) {
+					if (!behaviorExists || player->flags2.killMove || IsInMenuMode()) {
 						processCam = false;
 					}
 
