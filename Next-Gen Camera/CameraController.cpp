@@ -1,6 +1,7 @@
 #include "CameraController.h"
 #include "ConfigHandler.h"
 #include "Utils.h"
+#include <SKSE/GameData.h>
 #include <SKSE/GameObjects.h>
 #include <SKSE/GameRTTI.h>
 #include <SKSE/NiNodes.h>
@@ -52,6 +53,7 @@ void CameraController::MainBehavior() {
 			if (pCam) {
 				TESCameraState* pCamState = pCam->cameraState;
 				PlayerCharacter* player = *g_thePlayer;
+				MenuTopicManager* mtm = MenuTopicManager::GetSingleton();
 				if (pCamState && player && player->GetNiNode() && pCam->cameraStates) {
 					bool processCam = true;
 					if (pCamState != lastState) {
@@ -99,7 +101,11 @@ void CameraController::MainBehavior() {
 												*(float*)((UInt32)pCam + 0xBC));
 					}
 
-					if (!behaviorExists || player->flags2.killMove || IsInMenuMode()) {
+					bool isInDialogue = false;
+					if (mtm)
+						isInDialogue = *(bool*)((UInt32)mtm + 0x65);
+
+					if (!behaviorExists || player->flags2.killMove || IsInMenuMode() || isInDialogue) {
 						processCam = false;
 					}
 
@@ -163,7 +169,7 @@ enum {
 	State_WeaponIdle = 0x08, //This one has nothing to do with weapon drawn state. Means idle motion playing or not??
 	State_WeaponDrawing = 0x40,
 	State_WeaponDrawn = 0x60,
-	State_WeaponSheating = 0xA0
+	State_WeaponSheathing = 0xA0
 };
 
 enum {
