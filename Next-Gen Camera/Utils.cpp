@@ -146,3 +146,7 @@ ActiveEffect* Utils::GetActiveEffectFromActor(Actor* actor) {
 	}
 	return nullptr;
 }
+
+bool Utils::IsInMenuMode() {
+	return *((int*)0x1B3E428) > 0;
+}

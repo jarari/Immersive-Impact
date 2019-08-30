@@ -17,4 +17,5 @@ namespace Utils {
 	NiPoint3 WorldToLocal(NiPoint3 wpos, NiPoint3 lorigin, NiMatrix33 rot);
 	NiPoint3 LocalToWorld(NiPoint3 lpos, NiPoint3 lorigin, NiMatrix33 rot);
 	ActiveEffect* GetActiveEffectFromActor(Actor* actor);
+	bool IsInMenuMode();
 }
