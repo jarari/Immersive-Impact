@@ -205,7 +205,7 @@ void GetRefForward(float pitch, float yaw, float roll, NiPoint3* vec) {
 				0,				1,					0,
 				-sin(pitch),	0,					cos(pitch),
 				m_pitch);
-	NiPoint3 fwd = m_yaw * m_pitch * m_roll * NiPoint3(1, 0, 0);
+	NiPoint3 fwd = m_yaw * m_pitch * m_roll * NiPoint3(0, 1, 0);
 	vec->x = fwd.x;
 	vec->y = fwd.y;
 	vec->z = fwd.z;
@@ -283,11 +283,14 @@ TargetData FindClosestToAim(float maxAngle, float maxDistance) {
 			float sizey = (by + by2) / 2.0f;
 
 			NiPoint3 targetForward;
-			GetRefForward(target->rot.x, target->rot.y, target->rot.z, &targetForward);
+			GetRefForward(0, target->rot.z, target->rot.y, &targetForward);
 
 			NormalizeVector(dx, dy, dz);
 			float pt_dot = targetForward.x * dx + targetForward.y * dy + targetForward.z * dz;
 			float pt_ang = std::acos(pt_dot) * 180.0f / M_PI;
+			_MESSAGE("pt_ang %f, rot x %f y %f z %f", pt_ang, target->rot.x, target->rot.y, target->rot.z);
+			_MESSAGE("t forward x %f y %f z %f", targetForward.x, targetForward.y, targetForward.z);
+			_MESSAGE("delta x %f y %f z %f", dx, dy, dz);
 			UInt16 r;
 			//If the angle between target's forward and cam's forward is bigger than 45 and smaller than 135, 
 			//then use x size as bounding sphere size.
