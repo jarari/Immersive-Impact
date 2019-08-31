@@ -1,4 +1,5 @@
 #include "Papyrus.h"
+#include "CameraController.h"
 #include "ConfigHandler.h"
 #include <SKSE\PapyrusNativeFunctions.h>
 #include <SKSE\GameForms.h>
@@ -18,14 +19,14 @@ void CustomEvent::SyncDefault(UInt32 type, float val) {
 	);
 }
 
-void CustomEvent::RegisterScript(TESQuest* thisForm) {
+#pragma region PAPYRUS_FUNCTIONS
+
+void RegisterScript(TESQuest* thisForm) {
 	if (!thisForm)
 		return;
 	g_mainScriptRegs.Register<TESQuest>(kFormType_Quest, thisForm);
 	_MESSAGE("Papyrus registered");
 }
-
-#pragma region PAPYRUS_FUNCTIONS
 
 void UpdateConfig(StaticFunctionTag* base, UInt32 configtype, float v) {
 	configValues[configtype] = v;
@@ -49,7 +50,7 @@ void ForceSyncConfig(StaticFunctionTag* base) {
 
 bool Papyrus::RegisterFuncs(VMClassRegistry* registry) {
 	registry->RegisterFunction(
-		new NativeFunction0 <TESQuest, void>("RegisterScript", "BingleNextGenCameraMCM", CustomEvent::RegisterScript, registry));
+		new NativeFunction0 <TESQuest, void>("RegisterScript", "BingleNextGenCameraMCM", RegisterScript, registry));
 	registry->SetFunctionFlags("BingleNextGenCameraMCM", "RegisterScript", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->RegisterFunction(
 		new NativeFunction2 <StaticFunctionTag, void, UInt32, float>("UpdateConfig", "BingleNextGenCameraMCM", UpdateConfig, registry));
