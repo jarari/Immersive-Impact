@@ -1,6 +1,6 @@
+#include "CameraController.h"
 #include "MenuCloseWatcher.h"
 #include <SKSE\GameMenus.h>
-#include <Next-Gen Camera\CameraController.h>
 
 MenuCloseWatcher* MenuCloseWatcher::instance = nullptr;
 
