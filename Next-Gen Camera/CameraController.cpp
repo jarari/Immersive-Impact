@@ -35,7 +35,6 @@ EventResult CameraPositionUpdater::ReceiveEvent(bhkCharacterMoveFinishEvent* evn
 		CameraController::playerVelocity = w_deltaPlayerPos;
 		lastElapsed = ae->elapsed;
 		CameraController::lastPlayerPos = player->pos;
-		_MESSAGE("Vel x %f y %f z %f", w_deltaPlayerPos.x, w_deltaPlayerPos.y, w_deltaPlayerPos.z);
 	}
 	return kEvent_Continue;
 }
