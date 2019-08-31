@@ -33,7 +33,8 @@ const char* ConfigTypeNames[ConfigType::EndOfEnumMarker] = {
 	"fCamVelocityStrengthY",
 	"fCamVelocityStrengthZ",
 	"iShoulderSwitchKey",
-	"iShoulder"
+	"iShoulder",
+	"fVelocityUpdateCycle"
 };
 float configValues[ConfigType::EndOfEnumMarker];
 
@@ -208,6 +209,11 @@ void ConfigHandler::InitHandler() {
 		ini.SaveFile(filepath, false);
 
 		type = CTYPE(iShoulder);
+		sprintf_s(f2c, "%f", GetDefault(type));
+		ini.SetValue("General", CNAME(type), f2c);
+		ini.SaveFile(filepath, false);
+
+		type = CTYPE(fVelocityUpdateCycle);
 		sprintf_s(f2c, "%f", GetDefault(type));
 		ini.SetValue("General", CNAME(type), f2c);
 		ini.SaveFile(filepath, false);
@@ -426,6 +432,13 @@ void ConfigHandler::LoadConfig() {
 	UpdateFromConfig(type, val);
 	CustomEvent::SyncConfig(type, val);
 	CustomEvent::SyncDefault(type, GetDefault(type));
+
+	type = CTYPE(fVelocityUpdateCycle);
+	snprintf(defaultbuf, sizeof defaultbuf, "%f", GetDefault(type));
+	val = std::stof(ini.GetValue("General", CNAME(type), defaultbuf, NULL));
+	UpdateFromConfig(type, val);
+	CustomEvent::SyncConfig(type, val);
+	CustomEvent::SyncDefault(type, GetDefault(type));
 }
 
 void ConfigHandler::SetConfig(ConfigType ctype, float v, bool save) {
@@ -508,6 +521,8 @@ float ConfigHandler::GetDefault(ConfigType c) {
 			return 26;
 		case ConfigType::iShoulder:
 			return 1;
+		case ConfigType::fVelocityUpdateCycle:
+			return 0.025f;
 	}
 	return 0.0f;
 }

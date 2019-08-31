@@ -34,6 +34,7 @@ enum ConfigType {
 	fCamVelocityStrengthZ,
 	iShoulderSwitchKey,
 	iShoulder,
+	fVelocityUpdateCycle,
 	EndOfEnumMarker
 };
 extern const char* ConfigTypeNames[];
