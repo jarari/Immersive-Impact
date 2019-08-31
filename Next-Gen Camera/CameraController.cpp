@@ -2,15 +2,46 @@
 #include "ConfigHandler.h"
 #include "Utils.h"
 #include <SKSE/GameData.h>
+#include <SKSE/GameEvents.h>
 #include <SKSE/GameObjects.h>
 #include <SKSE/GameRTTI.h>
 #include <SKSE/NiNodes.h>
 #include <thread>
 #include <chrono>
+#include <SKSE\SafeWrite.h>
 
 using namespace Utils;
 
+CameraPositionUpdater::~CameraPositionUpdater() {
+}
+
+EventResult CameraPositionUpdater::ReceiveEvent(bhkCharacterMoveFinishEvent* evn, EventDispatcher<bhkCharacterMoveFinishEvent>* dispatcher) {
+	//_MESSAGE("event called");
+	if (pCamState && shouldUpdate) {
+		*(float*)((UInt32)pCamState + 0x3C) = posX;
+		*(float*)((UInt32)pCamState + 0x40) = posY;
+		*(float*)((UInt32)pCamState + 0x44) = posZ;
+		shouldUpdate = false;
+	}
+	if (ae && player && ae->elapsed - lastElapsed >= configValues[fVelocityUpdateCycle]) {
+		float dElapsed = ae->elapsed - lastElapsed;
+		CameraController::playerVelocity = (player->pos - CameraController::lastPlayerPos) / dElapsed;
+		//TODO: Calculate Velocity
+		NiPoint3 l_deltaPlayerPos = WorldToLocal(CameraController::playerVelocity, NiPoint3(), player->GetNiNode()->m_worldTransform.rot);
+		l_deltaPlayerPos.x *= configValues[fCamVelocityStrengthX];
+		l_deltaPlayerPos.y *= configValues[fCamVelocityStrengthY];
+		l_deltaPlayerPos.z *= configValues[fCamVelocityStrengthZ];
+		NiPoint3 w_deltaPlayerPos = LocalToWorld(l_deltaPlayerPos, NiPoint3(), player->GetNiNode()->m_worldTransform.rot);
+		CameraController::playerVelocity = w_deltaPlayerPos;
+		lastElapsed = ae->elapsed;
+		CameraController::lastPlayerPos = player->pos;
+		_MESSAGE("Vel x %f y %f z %f", w_deltaPlayerPos.x, w_deltaPlayerPos.y, w_deltaPlayerPos.z);
+	}
+	return kEvent_Continue;
+}
+
 bool CameraController::hookActive = false;
+CameraPositionUpdater* CameraController::camUpdater = nullptr;
 CameraController* CameraController::instance = nullptr;
 NiPoint3 CameraController::camTargetPos;
 NiPoint3 CameraController::camVanillaPos;
@@ -23,18 +54,45 @@ float CameraController::smoothingEnforcer;
 float CameraController::offsetX;
 float CameraController::offsetZ;
 
+void CameraController::HookCharacterMoveFinishEvent() {
+	_MESSAGE("Trying to hook event");
+	PlayerCharacter* player = *g_thePlayer;
+	if (player && player->processManager && player->processManager->middleProcess) {
+		EventDispatcher<bhkCharacterMoveFinishEvent>* src = (EventDispatcher<bhkCharacterMoveFinishEvent>*)(*(UInt32*)((UInt32)player->processManager->middleProcess + 0x15C) + 0x8);
+		src->AddEventSink((BSTEventSink<bhkCharacterMoveFinishEvent>*)CameraController::camUpdater);
+		_MESSAGE("bhkCharacterMoveFinishEvent hooked");
+	}
+}
+
+void ApplyPatch(UInt32 base, UInt8* buf, UInt32 len)
+{
+	for (UInt32 i = 0; i < len; i++)
+		SafeWrite8(base + i, buf[i]);
+}
+
 //006B8800 (Actor* horse?, return float?)
 //fOverShoulderRangedMountedPosX, fOverShoulderRangedMountedAddY, fOverShoulderRangedMountedPosZ when weapon drawn
 //TESRace + 0x118, 0x11C, 0x120 when weapon sheathed
 
-float fCamDeltaMin = 3.0f;
+float fCamDeltaMin = 1.0f;
 
 void CameraController::MainBehavior() {
 	_MESSAGE("Thread start");
 	if (instance)
 		delete(instance);
 	instance = new CameraController();
+	UInt8 disableInterpolation[] = {
+		0x8B, 0x56, 0x3C,
+		0xDD, 0xDA,
+		0xDD, 0xD8,
+		0x8B, 0x46, 0x40,
+		0xDD, 0xD8,
+		0x8B, 0x4E, 0x44,
+		0xEB, 0x25
+	};
+	ApplyPatch(0x008401D8, disableInterpolation, sizeof(disableInterpolation));
 	bool running = true;
+	float lastRun = 0.0f;
 	TESCameraState* lastState = nullptr;
 	camTargetPos = NiPoint3();
 	camVanillaPos = NiPoint3();
@@ -43,16 +101,18 @@ void CameraController::MainBehavior() {
 	camBase = NiPoint3();
 	lastPlayerPos = NiPoint3();
 	smoothingEnforcer = 999.0f;
-	ActiveEffect* ae = nullptr;
 	float lastElapsed = 0.0f;
 	playerVelocity = NiPoint3();
 	float lastSprintFov = 0.0f;
+	camUpdater = new CameraPositionUpdater();
+	float lastUpdated = 0.0f;
+	bool updateSwitch = false;
 	while (running) {
 		if (hookActive) {
 			PlayerCamera* pCam = PlayerCamera::GetSingleton();
 			if (pCam) {
-				TESCameraState* pCamState = pCam->cameraState;
 				PlayerCharacter* player = *g_thePlayer;
+				TESCameraState* pCamState = pCam->cameraState;
 				MenuTopicManager* mtm = MenuTopicManager::GetSingleton();
 				if (pCamState && player && player->GetNiNode() && pCam->cameraStates) {
 					bool processCam = true;
@@ -64,27 +124,25 @@ void CameraController::MainBehavior() {
 						camTargetPos = camCurrentPos;
 						lastPlayerPos = player->pos;
 						processCam = false;
-						ae = GetActiveEffectFromActor(player);
-						lastElapsed = ae->elapsed;
+						camUpdater->ae = GetActiveEffectFromActor(player);
+						camUpdater->lastElapsed = camUpdater->ae->elapsed;
 						playerVelocity = NiPoint3();
 						pCam->worldFOV = pCam->worldFOV + lastSprintFov;
 						lastSprintFov = 0.0f;
+						lastUpdated = 0.0f;
 					}
 					bool behaviorExists = false;
 					smoothingEnforcer = 999.0f;
 
-					if (ae && ae->elapsed - lastElapsed >= 0.05f) {
-						float dElapsed = ae->elapsed - lastElapsed;
-						playerVelocity = (player->pos - lastPlayerPos) / dElapsed;
-						//TODO: Calculate Velocity
-						NiPoint3 l_deltaPlayerPos = WorldToLocal(playerVelocity, NiPoint3(), player->GetNiNode()->m_worldTransform.rot);
-						l_deltaPlayerPos.x *= configValues[fCamVelocityStrengthX];
-						l_deltaPlayerPos.y *= configValues[fCamVelocityStrengthY];
-						l_deltaPlayerPos.z *= configValues[fCamVelocityStrengthZ];
-						NiPoint3 w_deltaPlayerPos = LocalToWorld(l_deltaPlayerPos, NiPoint3(), player->GetNiNode()->m_worldTransform.rot);
-						playerVelocity = w_deltaPlayerPos;
-						lastElapsed = ae->elapsed;
+					if (updateSwitch && !camUpdater->shouldUpdate) {
+						lastUpdated = camUpdater->ae->elapsed;
+						updateSwitch = false;
+					}
+					if (camUpdater->ae->elapsed - lastUpdated > 3) {
+						lastUpdated = camUpdater->ae->elapsed;
 						lastPlayerPos = player->pos;
+						camUpdater->player = player;
+						HookCharacterMoveFinishEvent();
 					}
 
 					if (pCamState == pCam->cameraStates[PlayerCamera::kCameraState_ThirdPerson2]) {
@@ -133,12 +191,17 @@ void CameraController::MainBehavior() {
 						camCurrentPos += deltaCam;
 
 						//TODO: Calculate world position -> convert to local position using variables
-						NiPoint3 l_currpos = WorldToLocal(camCurrentPos, camVanillaBase, pCam->cameraNode->m_worldTransform.rot);
-						NiPoint3 l_vanillapos = WorldToLocal(camVanillaPos, camVanillaBase, pCam->cameraNode->m_worldTransform.rot);
-						NiPoint3 l_delta = l_currpos - l_vanillapos;
-						*(float*)((UInt32)pCamState + 0x3C) = l_delta.x;
-						*(float*)((UInt32)pCamState + 0x40) = l_delta.y;
-						*(float*)((UInt32)pCamState + 0x44) = l_delta.z;
+						float deltaTimeCompensation = ((float)(clock() - lastRun) / CLOCKS_PER_SEC) / (1.0f / configValues[iTickRate]);
+						NiPoint3 l_delta = WorldToLocal(camCurrentPos, camVanillaPos, pCam->cameraNode->m_worldTransform.rot);
+						camUpdater->pCamState = pCamState;
+						camUpdater->posX = l_delta.x;
+						camUpdater->posY = l_delta.y;
+						camUpdater->posZ = l_delta.z;
+						*(float*)((UInt32)pCamState + 0x48) += (*(float*)((UInt32)pCamState + 0x3C) - *(float*)((UInt32)pCamState + 0x48)) / configValues[iTickRate] * 4.0f * deltaTimeCompensation;
+						*(float*)((UInt32)pCamState + 0x4C) += (*(float*)((UInt32)pCamState + 0x40) - *(float*)((UInt32)pCamState + 0x4C)) / configValues[iTickRate] * 4.0f * deltaTimeCompensation;
+						*(float*)((UInt32)pCamState + 0x50) += (*(float*)((UInt32)pCamState + 0x44) - *(float*)((UInt32)pCamState + 0x50)) / configValues[iTickRate] * 4.0f * deltaTimeCompensation;
+						camUpdater->shouldUpdate = true;
+						updateSwitch = true;
 					}
 				}
 			}
@@ -147,6 +210,7 @@ void CameraController::MainBehavior() {
 			lastState = nullptr;
 			camCurrentPos = NiPoint3();
 		}
+		lastRun = clock();
 		std::this_thread::sleep_for(std::chrono::microseconds((int)(1000000 / configValues[iTickRate])));
 	}
 }
@@ -231,10 +295,10 @@ bool CameraController::ThirdPersonBehavior(ThirdPersonState* pCamState) {
 			if (CompareFlags(player->actorState.flags04, State_AttackSwing) ||
 				CompareFlags(player->actorState.flags04, State_Bash)) {
 				camDistOffset -= 40.0f * zoomLinear;
-				smoothingEnforcer = 1.0f;
+				smoothingEnforcer = 1.25f;
 			}
 			else if (CompareFlags(player->actorState.flags04, State_AttackPost)) {
-				smoothingEnforcer = 1.0f;
+				smoothingEnforcer = 1.25f;
 			}
 			//TODO: Bow Hold
 			//Actor state changes to State_BowDraw when the player pulls out a bow, so we check the idle state.
@@ -326,10 +390,10 @@ bool CameraController::HorseBehavior(HorseCameraState* pCamState) {
 			CompareFlags(player->actorState.flags04, State_AttackSwing) ||
 			CompareFlags(player->actorState.flags04, State_Bash)) {
 			camDistOffset -= 40.0f * zoomLinear;
-			smoothingEnforcer = 1.0f;
+			smoothingEnforcer = 1.25f;
 		}
 		else if (CompareFlags(player->actorState.flags04, State_AttackPost)) {
-			smoothingEnforcer = 1.0f;
+			smoothingEnforcer = 1.25f;
 		}
 		//TODO: Bow Hold
 		//Actor state changes to State_BowDraw when the player pulls out a bow, so we check the idle state.
