@@ -16,6 +16,7 @@ namespace Utils {
 	NiMatrix33 Inverse(NiMatrix33 mat);
 	NiPoint3 WorldToLocal(NiPoint3 wpos, NiPoint3 lorigin, NiMatrix33 rot);
 	NiPoint3 LocalToWorld(NiPoint3 lpos, NiPoint3 lorigin, NiMatrix33 rot);
+	NiPoint3 Lerp(NiPoint3 start, NiPoint3 end, float t);
 	ActiveEffect* GetActiveEffectFromActor(Actor* actor);
 	bool IsInMenuMode();
 }

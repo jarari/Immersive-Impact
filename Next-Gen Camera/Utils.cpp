@@ -112,6 +112,10 @@ NiPoint3 Utils::LocalToWorld(NiPoint3 lpos, NiPoint3 lorigin, NiMatrix33 rot) {
 	return rot * lpos + lorigin;
 }
 
+NiPoint3 Utils::Lerp(NiPoint3 start, NiPoint3 end, float t) {
+	return start + (end - start) * min(max(t, 0), 1);
+}
+
 ActiveEffect* Utils::GetActiveEffectFromActor(Actor* actor) {
 	if (!actor || !actor->GetNiNode())
 		return nullptr;
