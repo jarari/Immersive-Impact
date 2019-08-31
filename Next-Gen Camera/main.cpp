@@ -1,6 +1,7 @@
 #include "CameraController.h"
 #include "ConfigHandler.h"
 #include "MenuCloseWatcher.h"
+#include "NiNodeUpdateWatcher.h"
 #include "Papyrus.h"
 #include "skse/PluginAPI.h"		// super
 #include "skse/skse_version.h"	// What version of SKSE is running?
@@ -56,6 +57,7 @@ extern "C" {
 		g_papyrus = (SKSEPapyrusInterface*)skse->QueryInterface(kInterface_Papyrus);
 		g_papyrus->Register(Papyrus::RegisterFuncs);
 		MenuCloseWatcher::InitHook();
+		NiNodeUpdateWatcher::InitHook((SKSEMessagingInterface*)skse->QueryInterface(kInterface_Messaging));
 		ConfigHandler::InitHandler();
 		ConfigHandler::LoadConfig();
 

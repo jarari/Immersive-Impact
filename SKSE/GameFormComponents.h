@@ -27,6 +27,7 @@ class TESGlobal;
 class TESRegion;
 class BGSMusicType;
 class TESWeather;
+class TESPackage;
 
 //// root
 
@@ -1191,7 +1192,8 @@ public:
 	UInt32	unk00;						// 00
 	MiddleProcess	* middleProcess;	// 04
 	void	* unk08;					// 08
-	UInt32	unk0C[(0x54 - 0x0C) >> 2];	// 0C
+	TESPackage* package;				// 0C
+	UInt32	unk10[(0x54 - 0x10) >> 2];	// 10
 	float	timeOfDeath;				// 54 - GetTimeDead = (GameDaysPassed*24) - timeOfDeath
 	UInt32	unk58[(0x68 - 0x58) >> 2];	// 58
 	TESForm	* equippedObject[2];		// 68
@@ -1205,6 +1207,8 @@ public:
 	DEFINE_MEMBER_FN(SetEquipFlag, void, 0x0071F520, UInt8 flags);
 	DEFINE_MEMBER_FN(UpdateEquipment, void, 0x007031A0, Actor * actor);
 	DEFINE_MEMBER_FN(SetDataFlag, void, 0x006FD1A0, UInt32 flag); // Sets a number on the 0x08 object
+
+	void UpdateEquipment_Hooked(Actor* actor);
 };
 
 STATIC_ASSERT(offsetof(ActorProcessManager, equippedObject) == 0x68);

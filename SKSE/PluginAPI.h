@@ -196,7 +196,8 @@ struct SKSEMessagingInterface
 		kDispatcher_ModEvent = 0,
 		kDispatcher_CameraEvent,
 		kDispatcher_CrosshairEvent,
-		kDispatcher_ActionEvent
+		kDispatcher_ActionEvent,
+		kDispatcher_NiNodeUpdateEvent
 	};
 
 	// Use this to acquire SKSE's internal EventDispatchers so that you can sink to them

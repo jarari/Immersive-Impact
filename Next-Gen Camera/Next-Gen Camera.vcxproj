@@ -136,6 +136,7 @@
     <ClCompile Include="ConfigHandler.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MenuCloseWatcher.cpp" />
+    <ClCompile Include="NiNodeUpdateWatcher.cpp" />
     <ClCompile Include="Papyrus.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
@@ -143,6 +144,7 @@
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="ConfigHandler.h" />
     <ClInclude Include="MenuCloseWatcher.h" />
+    <ClInclude Include="NiNodeUpdateWatcher.h" />
     <ClInclude Include="Papyrus.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
