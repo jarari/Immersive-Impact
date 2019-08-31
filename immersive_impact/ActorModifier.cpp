@@ -59,7 +59,7 @@ void ActorModifier::RestrainView(Actor * a, bool restrain) {
 	if (!restrainEnabled) {
 		if (isViewRestrained) {
 			isViewRestrained = false;
-			PlayerCamera::GetSingleton()->unkD2 = 1;
+			PlayerCamera::GetSingleton()->unkD2 = 0;
 			//PlayerControls::GetSingleton()->inputHandlers[1]->enabled = true;
 		}
 		return;
