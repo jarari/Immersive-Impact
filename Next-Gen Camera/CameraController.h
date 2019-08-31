@@ -1,5 +1,6 @@
 #pragma once
 #include <SKSE/GameCamera.h>
+#include <SKSE/PapyrusEvents.h>
 #include <SKSE/Utilities.h>
 #include <SKSE/GameReferences.h>
 
@@ -36,6 +37,7 @@ protected:
 	static float smoothingEnforcer;
 	static float offsetX;
 	static float offsetZ;
+	static float lastUpdated;
 public:
 	static CameraPositionUpdater* camUpdater;
 	static NiPoint3 lastPlayerPos;
@@ -47,5 +49,6 @@ public:
 	}
 	static bool ThirdPersonBehavior(ThirdPersonState* pCamState);
 	static bool HorseBehavior(HorseCameraState* pCamState);
-	static void HookCharacterMoveFinishEvent();
+	static void HookCharacterMoveFinishEvent(PlayerCamera* pCam);
+	static void HookStatusCheck(float elapsed);
 };

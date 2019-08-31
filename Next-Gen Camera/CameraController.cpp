@@ -21,6 +21,7 @@ EventResult CameraPositionUpdater::ReceiveEvent(bhkCharacterMoveFinishEvent* evn
 		*(float*)((UInt32)pCamState + 0x3C) = posX;
 		*(float*)((UInt32)pCamState + 0x40) = posY;
 		*(float*)((UInt32)pCamState + 0x44) = posZ;
+		CameraController::HookStatusCheck(ae->elapsed);
 		shouldUpdate = false;
 	}
 	if (ae && player && ae->elapsed - lastElapsed >= configValues[fVelocityUpdateCycle]) {
@@ -52,15 +53,54 @@ NiPoint3 CameraController::playerVelocity;
 float CameraController::smoothingEnforcer;
 float CameraController::offsetX;
 float CameraController::offsetZ;
+float CameraController::lastUpdated;
 
-void CameraController::HookCharacterMoveFinishEvent() {
+//Only works when current state == HorseCameraState
+Actor* GetCurrentHorse() {
+	UInt32 unk = *((UInt32*)((UInt32)PlayerCamera::GetSingleton() + 0x2C));
+	return (Actor*)(*(UInt32*)((unk & 0xFFFFF) * 0x8 + 0x131063C) - 0x14);
+}
+
+struct UnkDispatcherHolder {
+	virtual ~UnkDispatcherHolder();
+public:
+	//vftable
+	UInt32 unk04;
+	EventDispatcher<bhkCharacterMoveFinishEvent> dispatcher;
+};
+
+EventDispatcher<bhkCharacterMoveFinishEvent>* lastDispatcher;
+void CameraController::HookCharacterMoveFinishEvent(PlayerCamera* pCam) {
 	_MESSAGE("Trying to hook event");
-	PlayerCharacter* player = *g_thePlayer;
-	if (player && player->processManager && player->processManager->middleProcess) {
-		EventDispatcher<bhkCharacterMoveFinishEvent>* src = (EventDispatcher<bhkCharacterMoveFinishEvent>*)(*(UInt32*)((UInt32)player->processManager->middleProcess + 0x15C) + 0x8);
-		src->AddEventSink((BSTEventSink<bhkCharacterMoveFinishEvent>*)CameraController::camUpdater);
-		_MESSAGE("bhkCharacterMoveFinishEvent hooked");
+	Actor* a = *g_thePlayer;
+	if (pCam->cameraState == pCam->cameraStates[PlayerCamera::kCameraState_Horse])
+		a = GetCurrentHorse();
+	if (a && a->processManager && a->processManager->middleProcess) {
+		UnkDispatcherHolder* holder = (UnkDispatcherHolder*)a->processManager->middleProcess->unk15C;
+		if (holder) {
+			_MESSAGE("Holder found at 0x%08x", (UInt32)holder);
+			EventDispatcher<bhkCharacterMoveFinishEvent>* src = &holder->dispatcher;
+			_MESSAGE("Dispatcher found at 0x%08x", (UInt32)& holder->dispatcher);
+			src->RemoveEventSink((BSTEventSink<bhkCharacterMoveFinishEvent>*)CameraController::camUpdater);
+			src->AddEventSink((BSTEventSink<bhkCharacterMoveFinishEvent>*)CameraController::camUpdater);
+			if (lastDispatcher && lastDispatcher != src) {
+				lastDispatcher->RemoveEventSink((BSTEventSink<bhkCharacterMoveFinishEvent>*)CameraController::camUpdater);
+				_MESSAGE("Removed sink from the last dispatcher");
+			}
+			lastDispatcher = src;
+			_MESSAGE("bhkCharacterMoveFinishEvent hooked");
+		}
+		else {
+			_MESSAGE("Hook failed! No holder.");
+		}
 	}
+	else {
+		_MESSAGE("Hook failed! a : 0x%08x", (UInt32)a);
+	}
+}
+
+void CameraController::HookStatusCheck(float elapsed) {
+	lastUpdated = elapsed;
 }
 
 void ApplyPatch(UInt32 base, UInt8* buf, UInt32 len)
@@ -89,7 +129,11 @@ void CameraController::MainBehavior() {
 		0x8B, 0x4E, 0x44,
 		0xEB, 0x25
 	};
+	UInt8 disablefOverShoulderCombatValues[] = {
+		0xC2, 0x04, 0x00
+	};
 	ApplyPatch(0x008401D8, disableInterpolation, sizeof(disableInterpolation));
+	ApplyPatch(0x0083F880, disablefOverShoulderCombatValues, sizeof(disablefOverShoulderCombatValues));
 	bool running = true;
 	float lastRun = 0.0f;
 	TESCameraState* lastState = nullptr;
@@ -104,16 +148,15 @@ void CameraController::MainBehavior() {
 	playerVelocity = NiPoint3();
 	float lastSprintFov = 0.0f;
 	camUpdater = new CameraPositionUpdater();
-	float lastUpdated = 0.0f;
-	bool updateSwitch = false;
+	lastUpdated = 0.0f;
 	while (running) {
 		if (hookActive) {
+			PlayerCharacter* player = *g_thePlayer;
 			PlayerCamera* pCam = PlayerCamera::GetSingleton();
-			if (pCam) {
-				PlayerCharacter* player = *g_thePlayer;
+			MenuTopicManager* mtm = MenuTopicManager::GetSingleton();
+			if (pCam && player && player->GetNiNode() && pCam->cameraStates && mtm) {
 				TESCameraState* pCamState = pCam->cameraState;
-				MenuTopicManager* mtm = MenuTopicManager::GetSingleton();
-				if (pCamState && player && player->GetNiNode() && pCam->cameraStates) {
+				if (pCamState) {
 					bool processCam = true;
 					if (pCamState != lastState) {
 						_MESSAGE("State changed");
@@ -128,21 +171,12 @@ void CameraController::MainBehavior() {
 						playerVelocity = NiPoint3();
 						pCam->worldFOV = pCam->worldFOV + lastSprintFov;
 						lastSprintFov = 0.0f;
-						lastUpdated = 0.0f;
+						lastUpdated = camUpdater->ae->elapsed;
+						camUpdater->player = player;
+						HookCharacterMoveFinishEvent(pCam);
 					}
 					bool behaviorExists = false;
 					smoothingEnforcer = 999.0f;
-
-					if (updateSwitch && !camUpdater->shouldUpdate) {
-						lastUpdated = camUpdater->ae->elapsed;
-						updateSwitch = false;
-					}
-					if (camUpdater->ae->elapsed - lastUpdated > 3) {
-						lastUpdated = camUpdater->ae->elapsed;
-						lastPlayerPos = player->pos;
-						camUpdater->player = player;
-						HookCharacterMoveFinishEvent();
-					}
 
 					if (pCamState == pCam->cameraStates[PlayerCamera::kCameraState_ThirdPerson2]) {
 						processCam = ThirdPersonBehavior((ThirdPersonState*)pCamState);
@@ -166,8 +200,15 @@ void CameraController::MainBehavior() {
 						processCam = false;
 					}
 
-
 					if (processCam) {
+						if (camUpdater->ae && camUpdater->ae->elapsed - lastUpdated > 3) {
+							_MESSAGE("Hook status check timeout");
+							lastUpdated = camUpdater->ae->elapsed;
+							lastPlayerPos = player->pos;
+							camUpdater->player = player;
+							HookCharacterMoveFinishEvent(pCam);
+						}
+
 						//Disable sprint effect
 						if (((ThirdPersonState*)pCamState)->controllerNode) {
 							float SprintFov = ((ThirdPersonState*)pCamState)->controllerNode->m_localTransform.pos.z;
@@ -200,7 +241,6 @@ void CameraController::MainBehavior() {
 						*(float*)((UInt32)pCamState + 0x4C) += (*(float*)((UInt32)pCamState + 0x40) - *(float*)((UInt32)pCamState + 0x4C)) / configValues[iTickRate] * 4.0f * deltaTimeCompensation;
 						*(float*)((UInt32)pCamState + 0x50) += (*(float*)((UInt32)pCamState + 0x44) - *(float*)((UInt32)pCamState + 0x50)) / configValues[iTickRate] * 4.0f * deltaTimeCompensation;
 						camUpdater->shouldUpdate = true;
-						updateSwitch = true;
 					}
 				}
 			}
@@ -347,12 +387,6 @@ bool CameraController::ThirdPersonBehavior(ThirdPersonState* pCamState) {
 
 	camTargetPos = camBase - camFwd * (camDist + camDistOffset);
 	return true;
-}
-
-//Only works when current state == HorseCameraState
-Actor* GetCurrentHorse() {
-	UInt32 unk = *((UInt32*)((UInt32)PlayerCamera::GetSingleton() + 0x2C));
-	return (Actor*)(*(UInt32*)((unk & 0xFFFFF) * 0x8 + 0x131063C) - 0x14);
 }
 
 bool CameraController::HorseBehavior(HorseCameraState* pCamState) {
