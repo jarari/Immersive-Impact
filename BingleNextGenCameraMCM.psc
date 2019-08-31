@@ -39,6 +39,7 @@ int	sliderfSneakMagicOffsetX_S
 int	sliderfSneakMagicOffsetZOID_S
 int	sliderfSneakBowOffsetXOID_S
 int	sliderfSneakBowOffsetZOID_S
+int	sliderfVelocityUpdateCycleOID_S
 int	keyiShoulderSwitchOID_K
 
 ; Public
@@ -71,6 +72,7 @@ float property valuefSneakMagicOffsetX auto
 float property valuefSneakMagicOffsetZ auto
 float property valuefSneakBowOffsetX auto
 float property valuefSneakBowOffsetZ auto
+float property valuefVelocityUpdateCycle auto
 int property keyiShoulderSwitch auto
 int property valueiShoulder auto
 
@@ -104,6 +106,7 @@ float defaultfSneakMagicOffsetX
 float defaultfSneakMagicOffsetZ
 float defaultfSneakBowOffsetX
 float defaultfSneakBowOffsetZ
+float defaultfVelocityUpdateCycle
 int defaultiShoulderSwitch
 int defaultiShoulder
 
@@ -218,6 +221,8 @@ event OnSyncConfig(int type, float v)
 		ShoulderSwitchKeyRegister((v as int))
 	elseif(type == 30)
 		valueiShoulder = (v as int)
+	elseif(type == 31)
+		valuefVelocityUpdateCycle = v
 	endif
 endEvent
 
@@ -284,6 +289,8 @@ event OnSyncDefault(int type, float v)
 		defaultiShoulderSwitch = (v as int)
 	elseif(type == 30)
 		defaultiShoulder = (v as int)
+	elseif(type == 31)
+		defaultfVelocityUpdateCycle = v
 	endif
 endEvent
 
@@ -332,7 +339,9 @@ event OnPageReset(string a_page)
 		sliderfHorseBowOffsetXOID_S = AddSliderOption("$BINGLE_NGC_SETTINGS_BOWOFFSETX", valuefHorseBowOffsetX, "{1}")
 		sliderfHorseBowOffsetZOID_S = AddSliderOption("$BINGLE_NGC_SETTINGS_BOWOFFSETZ", valuefHorseBowOffsetZ, "{1}")
 	elseif (a_page == "$BINGLE_NGC_PAGE_EXPERIMENTAL")
+		SetCursorFillMode(TOP_TO_BOTTOM)
 		slideriTickRateOID_S = AddSliderOption("$BINGLE_NGC_SETTINGS_TICKRATE", valueiTickRate, "{0}")
+		sliderfVelocityUpdateCycleOID_S = AddSliderOption("$BINGLE_NGC_SETTINGS_VELUPDATECYCLE", valuefVelocityUpdateCycle, "{3}")
 	endif
 endEvent
 
@@ -555,6 +564,12 @@ event OnOptionSliderOpen(int option)
 		SetSliderDialogStartValue(valuefSneakBowOffsetZ)
 		SetSliderDialogDefaultValue(defaultfSneakBowOffsetZ)
 		
+	elseif(option == sliderfVelocityUpdateCycleOID_S)
+		SetSliderDialogInterval(0.001)
+		SetSliderDialogRange(0.001, 0.050)
+		SetSliderDialogStartValue(valuefVelocityUpdateCycle)
+		SetSliderDialogDefaultValue(defaultfVelocityUpdateCycle)
+		
 	endif
 endEvent
 
@@ -703,6 +718,11 @@ event OnOptionSliderAccept(int option, float value)
 		valuefSneakBowOffsetZ = value
 		SetSliderOptionValue(sliderfSneakBowOffsetZOID_S, valuefSneakBowOffsetZ, "{1}")
 		UpdateSaveConfig(26, valuefSneakBowOffsetZ)
+		
+	elseif(option == sliderfVelocityUpdateCycleOID_S)
+		valuefVelocityUpdateCycle = value
+		SetSliderOptionValue(sliderfVelocityUpdateCycleOID_S, valuefVelocityUpdateCycle, "{3}")
+		UpdateSaveConfig(31, valuefVelocityUpdateCycle)
 		
 	endif
 endEvent
