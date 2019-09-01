@@ -50,7 +50,7 @@ enum CamBases {
 NiPoint3 vDialogueOffsets[] = {
 	NiPoint3(45, -50, 5),
 	NiPoint3(45, -50, 5),
-	NiPoint3(0, -200, 0)
+	NiPoint3(-200, 0, 0)
 };
 NiPoint3 vDialogueRotations[] = { //AC = x, B0 = z
 	NiPoint3(0, 0, 0),
@@ -321,6 +321,7 @@ void CameraController::MainBehavior() {
 						camUpdater->posZ = l_delta.z;
 					}
 					else if (processDialogueCam && isInDialogue && pCamState == pCam->cameraStates[PlayerCamera::kCameraState_ThirdPerson2] && !IsInMenuMode()) {
+						processCam = true;
 						if (dialogueTimer >= 5.0f) {
 							dialogueTimer = 0.0f;
 							dialoguePreset = (dialoguePreset + 1) % dialoguePresetCount;
@@ -372,8 +373,8 @@ void CameraController::MainBehavior() {
 								VecToAng(diff, dialogueCamPitch, dialogueCamYaw);
 								break;
 							case eBehavior_Horizontal:
-								NiMatrix33 rotateHorizontal = GetRotationMatrix33(0, vDialogueRotations[dialoguePreset].z, 0);
-								_MESSAGE("preset yaw %f", vDialogueRotations[dialoguePreset].z);
+								NiMatrix33 rotateHorizontal = GetRotationMatrix33(NiPoint3(0, 0, 1), vDialogueRotations[dialoguePreset].z);
+								diff = rotateHorizontal * diff;
 								VecToAng(diff, dialogueCamPitch, dialogueCamYaw);
 								break;
 							case eBehavior_Scripted:
@@ -382,29 +383,18 @@ void CameraController::MainBehavior() {
 								break;
 							}
 
-							NiMatrix33 camrot = GetRotationMatrix33(dialogueCamPitch, dialogueCamYaw, 0);
+							NiMatrix33 rotate90 = GetRotationMatrix33(diff, 1.57079632679);
+							NiMatrix33 camrot = rotate90 * GetRotationMatrix33(dialogueCamPitch, dialogueCamYaw, 0);
 							if (iDialogueCamBases[dialoguePreset] == eBase_World) {
 								dialogueCamPos = LocalToWorld(vDialogueOffsets[dialoguePreset], dialogueCamBase, camrot);
 							}
 
-							NiMatrix33 rotate90 = GetRotationMatrix33(diff, 1.57079632679);
 							pCam->cameraNode->m_children.m_data[0]->m_worldTransform.pos = dialogueCamPos;
-							pCam->cameraNode->m_children.m_data[0]->m_worldTransform.rot = rotate90 * camrot;
-							//*(float*)((UInt32)pCamState + 0xAC) = dialogueCamYaw;
-							//*(float*)((UInt32)pCamState + 0xB0) = dialogueCamPitch;
-							//NiPoint3 l_delta = WorldToLocal(dialogueCamPos, camVanillaPos, pCam->cameraNode->m_worldTransform.rot);
-							//camUpdater->pCamState = pCamState;
-							//camUpdater->posX = l_delta.x;
-							//camUpdater->posY = l_delta.y;
-							//camUpdater->posZ = l_delta.z;
-							*(float*)((UInt32)pCamState + 0x48) = *(float*)((UInt32)pCamState + 0x3C);
-							*(float*)((UInt32)pCamState + 0x4C) = *(float*)((UInt32)pCamState + 0x40);
-							*(float*)((UInt32)pCamState + 0x50) = *(float*)((UInt32)pCamState + 0x44);
-							_MESSAGE("pitch %f yaw %f", dialogueCamPitch, dialogueCamYaw);
+							pCam->cameraNode->m_children.m_data[0]->m_worldTransform.rot = camrot;
+							//_MESSAGE("pitch %f yaw %f", dialogueCamPitch, dialogueCamYaw);
 
 							camCurrentPos = dialogueCamPos;
 							dialogueTimer += (float)(clock() - lastRun) / CLOCKS_PER_SEC;
-							processCam = true;
 						}
 						else {
 							_MESSAGE("No dialogue target!");
