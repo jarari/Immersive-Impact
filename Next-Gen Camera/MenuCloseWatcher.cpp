@@ -28,6 +28,15 @@ EventResult MenuCloseWatcher::ReceiveEvent(MenuOpenCloseEvent* evn, EventDispatc
 	else if (uistr && evn->menuName == uistr->loadingMenu && !evn->opening) {
 		CameraController::hookActive = true;
 	}
+	else if (uistr && evn->menuName == uistr->dialogueMenu && evn->opening) {
+		CameraController::processDialogueCam = true;
+	}
+	else if (uistr && evn->menuName == uistr->dialogueMenu && !evn->opening) {
+		CameraController::processDialogueCam = false;
+		CameraController::ResetDialogueVariables();
+		CALL_MEMBER_FN(PlayerCamera::GetSingleton(), UpdateThirdPerson)(false);
+		_MESSAGE("Dialogue menu closing");
+	}
 	else if (uistr && evn->menuName == uistr->mainMenu && evn->opening) {
 		CameraController::hookActive = false;
 	}
