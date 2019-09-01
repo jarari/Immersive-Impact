@@ -193,6 +193,28 @@ cleanup:
 	}
 }
 
+static const UInt32 exterior_Origin = 0x00B179A1;
+static const UInt32 exterior_JP = 0x00B179D4;
+void __declspec(naked) DisableCameraUpdateExterior() {
+	__asm {
+		push	ecx
+		mov		cl, [CameraController::processCam]
+		and		cl, [CameraController::processDialogueCam]
+		jne		cleanup
+		pop		ecx
+		jp		gojp //WTF??? jp [exterior_JP] gives me a compile error???
+	}
+gojp:
+	__asm {
+		jmp		[exterior_JP]
+	}
+cleanup:
+	__asm {
+		pop		ecx
+		jmp		[exterior_Origin]
+	}
+}
+
 float fCamDeltaMin = 1.0f;
 void CameraController::MainBehavior() {
 	_MESSAGE("Thread start");
@@ -215,6 +237,7 @@ void CameraController::MainBehavior() {
 	ApplyPatch(0x0083F880, disablefOverShoulderCombatValues, sizeof(disablefOverShoulderCombatValues));
 	WriteRelCall(0x0083E9FD, GetFnAddr(&CameraController::HookPreUpdate));
 	WriteRelJump(0x006532F4, GetFnAddr(&DisableCameraUpdate));
+	WriteRelJump(0x00B1799C, GetFnAddr(&DisableCameraUpdateExterior));
 	bool running = true;
 	float lastRun = 0.0f;
 	TESCameraState* lastState = nullptr;
