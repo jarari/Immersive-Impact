@@ -3,8 +3,8 @@
 #include "MenuCloseWatcher.h"
 #include "NiNodeUpdateWatcher.h"
 #include "Papyrus.h"
-#include "skse/PluginAPI.h"		// super
-#include "skse/skse_version.h"	// What version of SKSE is running?
+#include <skse/PluginAPI.h>		// super
+#include <skse/skse_version.h>	// What version of SKSE is running?
 #include <shlobj.h>				// CSIDL_MYCODUMENTS
 #include <string>
 #include <thread>
@@ -54,12 +54,25 @@ extern "C" {
 	bool SKSEPlugin_Load(const SKSEInterface* skse) {	// Called by SKSE to load this plugin
 		_MESSAGE((PLUGIN_NAME + ((string)" loaded")).c_str());
 
+		SKSEMessagingInterface* skseMsg = (SKSEMessagingInterface*)skse->QueryInterface(kInterface_Messaging);
+
 		g_papyrus = (SKSEPapyrusInterface*)skse->QueryInterface(kInterface_Papyrus);
 		g_papyrus->Register(Papyrus::RegisterFuncs);
 		MenuCloseWatcher::InitHook();
-		NiNodeUpdateWatcher::InitHook((SKSEMessagingInterface*)skse->QueryInterface(kInterface_Messaging));
+		NiNodeUpdateWatcher::InitHook(skseMsg);
 		ConfigHandler::InitHandler();
 		ConfigHandler::LoadConfig();
+		skseMsg->RegisterListener(skse->GetPluginHandle(), "SKSE", [](SKSEMessagingInterface::Message* msg) -> void {
+			if (msg->type == SKSEMessagingInterface::kMessage_PreLoadGame) {
+				CameraController::hookActive = false;
+			}
+			else if (msg->type == SKSEMessagingInterface::kMessage_PostLoadGame) {
+				if ((bool)msg->data) {
+					CameraController::hookActive = true;
+					_MESSAGE("Game loaded successfully.");
+				}
+			}
+		});
 
 		std::thread cameraThread(CameraController::MainBehavior);
 		cameraThread.detach();
