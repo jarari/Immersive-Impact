@@ -185,6 +185,8 @@ struct SKSEMessagingInterface
 		kMessage_DeleteGame,	// sent right before deleting the .skse cosave and the .ess save.
 								// dataLen: length of file path, data: char* file path of .ess savegame file
 		kMessage_InputLoaded,	// sent right after game input is loaded, right before the main menu initializes
+		kMessage_NewGame,		// sent after a new game is created, before the game has loaded (Sends CharGen TESQuest pointer)
+		kMessage_DataLoaded		// send after the data handler has loaded all its forms
 	};
 
 	UInt32	interfaceVersion;
