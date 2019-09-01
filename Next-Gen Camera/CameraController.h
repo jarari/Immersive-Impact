@@ -28,6 +28,7 @@ public:
 
 class CameraController {
 protected:
+	static bool processCam;
 	static CameraController* instance;
 	static NiPoint3 camTargetPos;
 	static NiPoint3 camVanillaPos;
@@ -38,11 +39,15 @@ protected:
 	static float offsetX;
 	static float offsetZ;
 	static float lastUpdated;
+	static float dialogueTimer;
+	static int dialoguePreset;
+	static TESObjectREFR* targetRef;
 public:
 	static CameraPositionUpdater* camUpdater;
 	static NiPoint3 lastPlayerPos;
 	static NiPoint3 playerVelocity;
 	static bool hookActive;
+	static bool processDialogueCam;
 	static void MainBehavior();
 	CameraController* GetInstance() {
 		return instance;
@@ -51,4 +56,6 @@ public:
 	static bool HorseBehavior(HorseCameraState* pCamState);
 	static void HookCharacterMoveFinishEvent(PlayerCamera* pCam);
 	static void HookStatusCheck(float elapsed);
+	static void HookPreUpdate();
+	static void ResetDialogueVariables();
 };
