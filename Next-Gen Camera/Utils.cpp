@@ -15,6 +15,8 @@ float Utils::Scale(NiPoint3 vec) {
 
 void Utils::NormalizeVector(float& x, float& y, float& z) {
 	float scale = Scale(NiPoint3(x, y, z));
+	if (scale == 0)
+		return;
 	x /= scale;
 	y /= scale;
 	z /= scale;
@@ -22,6 +24,8 @@ void Utils::NormalizeVector(float& x, float& y, float& z) {
 
 void Utils::NormalizeVector(NiPoint3& vec) {
 	float scale = Scale(vec);
+	if (scale == 0)
+		return;
 	vec.x /= scale;
 	vec.y /= scale;
 	vec.z /= scale;
