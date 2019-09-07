@@ -19,7 +19,7 @@ NAME::~NAME() {
 }
 
 EventResult NAME::ReceiveEvent(EVENT* evn, EventDispatcher<EVENT>* dispatcher) {
-	if (evn->reference == *g_thePlayer) {
+	if (evn->reference == *g_thePlayer && evn->reference->GetNiNode()) {
 		_MESSAGE("NiNode updated.");
 		PlayerCamera* pCam = PlayerCamera::GetSingleton();
 		if (pCam) {
