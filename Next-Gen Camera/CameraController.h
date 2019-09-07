@@ -22,7 +22,7 @@ public:
 	bool shouldUpdate = false;
 	float posX, posY, posZ, lastElapsed;
 	TESCameraState* pCamState;
-	PlayerCharacter* player;
+	Actor* player;
 	ActiveEffect* ae;
 };
 
@@ -47,6 +47,7 @@ public:
 	static NiPoint3 lastPlayerPos;
 	static NiPoint3 playerVelocity;
 	static bool hookActive;
+	static bool papyrusActive;
 	static bool processDialogueCam;
 	static void MainBehavior();
 	CameraController* GetInstance() {
@@ -55,6 +56,7 @@ public:
 	static bool ThirdPersonBehavior(ThirdPersonState* pCamState);
 	static bool HorseBehavior(HorseCameraState* pCamState);
 	static void HookCharacterMoveFinishEvent(PlayerCamera* pCam);
+	static void ResetLastDispatcher();
 	static void HookStatusCheck(float elapsed);
 	static void HookPreUpdate();
 	static void ResetDialogueVariables();
