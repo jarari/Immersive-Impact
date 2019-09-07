@@ -13,10 +13,34 @@
 #include <thread>
 #include <chrono>
 
+//--DEV NOTES--
+//006B8800 (Actor* horse?, return float?)
+//fOverShoulderRangedMountedPosX, fOverShoulderRangedMountedAddY, fOverShoulderRangedMountedPosZ when weapon drawn
+//TESRace + 0x118, 0x11C, 0x120 when weapon sheathed
+//PlayerControls + 0x1C + 0x20 - rotate Z, X?
+//00840920 updates camera coordinates, replacing it with ret 0004 pinned cam <-- called from Update(0x653480 + 0x2C)
+//¦¦---------virtual function in TESCameraState
+//CamState + 0x54 = target zoom, 0x58(unk54[1]) = current zoom, 0xA4 = sprint fov [0~1]
+//fMinCurrentZoom ~ 1
+//Distance from node : 255 at zoom 0, 445/zoom
+//CamState + 0x3C = fOverShoulderPosX, 0x48 = current PosX, 0x44 = fOverShoulderPosZ, 0x50 = current PosZ
+//CamState + 0xB8 = animcam, 0xB9 = update flag?
+//TODO : 0x0084046A, 0x008403F3?, anim cam impacts?
+
+//ward		concentration 			self		concentration		self		0	0	2	0
+//muffle	fire & forget			self		constant efct		self		0	0.5	1	0
+//heal		concentration			self		constant efct		self		0	0	2	0
+//trans		fire & forget			self		fire & forget		self		0	0.5	1	0
+//flame		concentration			aimed		concentration		aimed		0	0	2	2
+//light		fire & forget			aimed		fire & forget		aimed		0	0	1	2
+//skel		fire & forget			targloc		fire & forget		targloc		0	2	1	4
+//																			0x74, 0x78, 0x7C, 0x80
+
 using namespace Utils;
 
 bool CameraController::processCam = false;
 bool CameraController::hookActive = false;
+bool CameraController::papyrusActive = false;
 bool CameraController::processDialogueCam = false;
 CameraPositionUpdater* CameraController::camUpdater = nullptr;
 CameraController* CameraController::instance = nullptr;
@@ -90,7 +114,7 @@ EventResult CameraPositionUpdater::ReceiveEvent(bhkCharacterMoveFinishEvent* evn
 }
 
 //Only works when current state == HorseCameraState
-Actor* GetCurrentHorse() {
+Actor* GetCurrentCameraTarget() {
 	UInt32 unk = *((UInt32*)((UInt32)PlayerCamera::GetSingleton() + 0x2C));
 	return (Actor*)(*(UInt32*)((unk & 0xFFFFF) * 0x8 + 0x131063C) - 0x14);
 }
@@ -106,21 +130,18 @@ public:
 EventDispatcher<bhkCharacterMoveFinishEvent>* lastDispatcher;
 void CameraController::HookCharacterMoveFinishEvent(PlayerCamera* pCam) {
 	_MESSAGE("Trying to hook event");
-	Actor* a = *g_thePlayer;
-	if (pCam->cameraState == pCam->cameraStates[PlayerCamera::kCameraState_Horse])
-		a = GetCurrentHorse();
+	Actor* a = GetCurrentCameraTarget();
 	if (a && a->processManager && a->processManager->middleProcess) {
 		UnkDispatcherHolder* holder = (UnkDispatcherHolder*)a->processManager->middleProcess->unk15C;
 		if (holder) {
 			_MESSAGE("Holder found at 0x%08x", (UInt32)holder);
 			EventDispatcher<bhkCharacterMoveFinishEvent>* src = &holder->dispatcher;
 			_MESSAGE("Dispatcher found at 0x%08x", (UInt32)& holder->dispatcher);
-			src->RemoveEventSink((BSTEventSink<bhkCharacterMoveFinishEvent>*)CameraController::camUpdater);
-			src->AddEventSink((BSTEventSink<bhkCharacterMoveFinishEvent>*)CameraController::camUpdater);
 			if (lastDispatcher && lastDispatcher != src) {
 				lastDispatcher->RemoveEventSink((BSTEventSink<bhkCharacterMoveFinishEvent>*)CameraController::camUpdater);
 				_MESSAGE("Removed sink from the last dispatcher");
 			}
+			src->AddEventSink((BSTEventSink<bhkCharacterMoveFinishEvent>*)CameraController::camUpdater);
 			lastDispatcher = src;
 			_MESSAGE("bhkCharacterMoveFinishEvent hooked");
 		}
@@ -131,6 +152,10 @@ void CameraController::HookCharacterMoveFinishEvent(PlayerCamera* pCam) {
 	else {
 		_MESSAGE("Hook failed! a : 0x%08x", (UInt32)a);
 	}
+}
+
+void CameraController::ResetLastDispatcher() {
+	lastDispatcher = nullptr;
 }
 
 void CameraController::HookStatusCheck(float elapsed) {
@@ -163,33 +188,20 @@ void ApplyPatch(UInt32 base, UInt8* buf, UInt32 len) {
 		SafeWrite8(base + i, buf[i]);
 }
 
-//006B8800 (Actor* horse?, return float?)
-//fOverShoulderRangedMountedPosX, fOverShoulderRangedMountedAddY, fOverShoulderRangedMountedPosZ when weapon drawn
-//TESRace + 0x118, 0x11C, 0x120 when weapon sheathed
-//PlayerControls + 0x1C + 0x20 - rotate Z, X?
-//00840920 updates camera coordinates, replacing it with ret 0004 pinned cam <-- called from Update(0x653480 + 0x2C)
-//¦¦---------virtual function in TESCameraState
-
+static const UInt32 interior_Original = 0x006532C0;
+static const UInt32 interior_SkipTo = 0x006532EE;
 void __declspec(naked) DisableCameraUpdate() {
 	__asm {
 		push	ecx
 		mov		cl, [CameraController::processCam]
 		and		cl, [CameraController::processDialogueCam]
+		pop		ecx
 		jne		skipUpdate
-		cmp		[ebx], eax
-		setne	al
-		jmp		cleanup
+		jmp		[interior_Original]
 	}
 skipUpdate:
 	__asm {
-		mov		al, 0
-		cmp		[ebx], eax
-	}
-cleanup:
-	__asm {
-		pop		ecx
-		pop		ebx
-		ret		0004
+		jmp		[interior_SkipTo]
 	}
 }
 
@@ -202,7 +214,7 @@ void __declspec(naked) DisableCameraUpdateExterior() {
 		and		cl, [CameraController::processDialogueCam]
 		jne		cleanup
 		pop		ecx
-		jp		gojp //WTF??? jp [exterior_JP] gives me a compile error???
+		jp		gojp
 	}
 gojp:
 	__asm {
@@ -215,6 +227,12 @@ cleanup:
 	}
 }
 
+static const UInt32 addr_fOverShoulderInterpolation = 0x008401D8;
+static const UInt32 addr_fOverShoulderCombatApply = 0x0083F880;
+static const UInt32 addr_CameraPreUpdate = 0x0083E9FD;
+static const UInt32 addr_CameraUpdateInterior = 0x006532BB; //The original function checks if a NiNode exists.
+static const UInt32 addr_CameraUpdateExterior = 0x00B1799C;
+static const UInt32 addr_DisableSprintFOV = 0x00840A4B;
 float fCamDeltaMin = 1.0f;
 void CameraController::MainBehavior() {
 	_MESSAGE("Thread start");
@@ -228,16 +246,17 @@ void CameraController::MainBehavior() {
 		0x8B, 0x46, 0x40,
 		0xDD, 0xD8,
 		0x8B, 0x4E, 0x44,
-		0xEB, 0x25
+		0xEB, 0x25 //Removed all floating point store instructions.
 	};
 	UInt8 disablefOverShoulderCombatValues[] = {
-		0xC2, 0x04, 0x00
+		0xC2, 0x04, 0x00 //Just return, w/ stack clean up.
 	};
-	ApplyPatch(0x008401D8, disablefOverShoulderInterpolation, sizeof(disablefOverShoulderInterpolation));
-	ApplyPatch(0x0083F880, disablefOverShoulderCombatValues, sizeof(disablefOverShoulderCombatValues));
-	WriteRelCall(0x0083E9FD, GetFnAddr(&CameraController::HookPreUpdate));
-	WriteRelJump(0x006532F4, GetFnAddr(&DisableCameraUpdate));
-	WriteRelJump(0x00B1799C, GetFnAddr(&DisableCameraUpdateExterior));
+	ApplyPatch(addr_fOverShoulderInterpolation, disablefOverShoulderInterpolation, sizeof(disablefOverShoulderInterpolation));
+	ApplyPatch(addr_fOverShoulderCombatApply, disablefOverShoulderCombatValues, sizeof(disablefOverShoulderCombatValues));
+	WriteRelCall(addr_CameraPreUpdate, GetFnAddr(&CameraController::HookPreUpdate));
+	WriteRelJump(addr_CameraUpdateInterior, GetFnAddr(&DisableCameraUpdate));
+	WriteRelJump(addr_CameraUpdateExterior, GetFnAddr(&DisableCameraUpdateExterior));
+	SafeWrite8(addr_DisableSprintFOV, 0xEB); //Disable sprint effect. Tell the game that we don't have camera controller NiNode, w/o changing pointers.
 	bool running = true;
 	float lastRun = 0.0f;
 	TESCameraState* lastState = nullptr;
@@ -250,19 +269,17 @@ void CameraController::MainBehavior() {
 	smoothingEnforcer = 999.0f;
 	float lastElapsed = 0.0f;
 	playerVelocity = NiPoint3();
-	float lastSprintFov = 0.0f;
 	camUpdater = new CameraPositionUpdater();
 	lastUpdated = 0.0f;
 	int dialoguePresetCount = sizeof(vDialogueOffsets) / sizeof(vDialogueOffsets[0]);
 	while (running) {
-		if (hookActive) {
-			PlayerCharacter* player = *g_thePlayer;
+		if (hookActive && papyrusActive) {
+			Actor* player = GetCurrentCameraTarget();
 			PlayerCamera* pCam = PlayerCamera::GetSingleton();
 			MenuTopicManager* mtm = MenuTopicManager::GetSingleton();
 			if (player && player->GetNiNode()) {
 				TESCameraState* pCamState = pCam->cameraState;
 				if (pCamState) {
-					processCam = true;
 					if (pCamState != lastState) {
 						_MESSAGE("State changed");
 						lastState = pCamState;
@@ -271,15 +288,15 @@ void CameraController::MainBehavior() {
 						camTargetPos = camCurrentPos;
 						lastPlayerPos = player->pos;
 						processCam = false;
-						camUpdater->ae = GetActiveEffectFromActor(player);
+						camUpdater->ae = GetActiveEffectFromActor(*g_thePlayer);
 						camUpdater->lastElapsed = camUpdater->ae->elapsed;
 						playerVelocity = NiPoint3();
-						pCam->worldFOV = pCam->worldFOV + lastSprintFov;
-						lastSprintFov = 0.0f;
 						lastUpdated = camUpdater->ae->elapsed;
 						camUpdater->player = player;
-						HookCharacterMoveFinishEvent(pCam);
+						std::this_thread::sleep_for(std::chrono::microseconds((int)(1000000 / configValues[iTickRate])));
+						continue;
 					}
+					processCam = true;
 					bool behaviorExists = false;
 					smoothingEnforcer = 999.0f;
 
@@ -314,13 +331,6 @@ void CameraController::MainBehavior() {
 							HookCharacterMoveFinishEvent(pCam);
 						}
 
-						//Disable sprint effect
-						if (((ThirdPersonState*)pCamState)->controllerNode) {
-							float SprintFov = ((ThirdPersonState*)pCamState)->controllerNode->m_localTransform.pos.z;
-							pCam->worldFOV = pCam->worldFOV + lastSprintFov - SprintFov;
-							lastSprintFov = SprintFov;
-							//((ThirdPersonState*)pCamState)->controllerNode->m_localTransform.pos.z = 0.0f;
-						}
 						*(float*)((UInt32)pCamState + 0xA4) = 0.0f;
 						*(float*)((UInt32)pCamState + 0xA8) = 0.0f;
 
@@ -342,6 +352,10 @@ void CameraController::MainBehavior() {
 						camUpdater->posX = l_delta.x;
 						camUpdater->posY = l_delta.y;
 						camUpdater->posZ = l_delta.z;
+
+						*(float*)((UInt32)pCamState + 0x48) += (*(float*)((UInt32)pCamState + 0x3C) - *(float*)((UInt32)pCamState + 0x48)) / 5.0f;
+						*(float*)((UInt32)pCamState + 0x4C) += (*(float*)((UInt32)pCamState + 0x40) - *(float*)((UInt32)pCamState + 0x4C)) / 5.0f;
+						*(float*)((UInt32)pCamState + 0x50) += (*(float*)((UInt32)pCamState + 0x44) - *(float*)((UInt32)pCamState + 0x50)) / 5.0f;
 					}
 					else if (processDialogueCam && isInDialogue && pCamState == pCam->cameraStates[PlayerCamera::kCameraState_ThirdPerson2] && !IsInMenuMode()) {
 						processCam = true;
@@ -412,8 +426,11 @@ void CameraController::MainBehavior() {
 								dialogueCamPos = LocalToWorld(vDialogueOffsets[dialoguePreset], dialogueCamBase, camrot);
 							}
 
-							pCam->cameraNode->m_children.m_data[0]->m_worldTransform.pos = dialogueCamPos;
-							pCam->cameraNode->m_children.m_data[0]->m_worldTransform.rot = camrot;
+							if (pCam->cameraNode->m_children.m_data[0]) {
+								pCam->cameraNode->m_children.m_data[0]->m_worldTransform.pos = dialogueCamPos;
+								pCam->cameraNode->m_children.m_data[0]->m_worldTransform.rot = camrot;
+							}
+							
 							//_MESSAGE("pitch %f yaw %f", dialogueCamPitch, dialogueCamYaw);
 
 							camCurrentPos = dialogueCamPos;
@@ -426,10 +443,6 @@ void CameraController::MainBehavior() {
 								*(float*)((UInt32)pCam + 0xBC));
 						}
 					}
-
-					*(float*)((UInt32)pCamState + 0x48) += (*(float*)((UInt32)pCamState + 0x3C) - *(float*)((UInt32)pCamState + 0x48)) / 5.0f;
-					*(float*)((UInt32)pCamState + 0x4C) += (*(float*)((UInt32)pCamState + 0x40) - *(float*)((UInt32)pCamState + 0x4C)) / 5.0f;
-					*(float*)((UInt32)pCamState + 0x50) += (*(float*)((UInt32)pCamState + 0x44) - *(float*)((UInt32)pCamState + 0x50)) / 5.0f;
 				}
 			}
 		}
@@ -477,23 +490,9 @@ float GetZoom(TESCameraState* st) {
 bool CompareFlags(UInt32 actorflag, UInt32 flag) {
 	return (actorflag & flag) == flag;
 }
-//CamState + 0x54 = target zoom, 0x58(unk54[1]) = current zoom, 0xA4 = sprint fov [0~1]
-//fMinCurrentZoom ~ 1
-//Distance from node : 255 at zoom 0, 445/zoom
-//CamState + 0x3C = fOverShoulderPosX, 0x48 = current PosX, 0x44 = fOverShoulderPosZ, 0x50 = current PosZ
-//CamState + 0xB8 = animcam, 0xB9 = update flag?
-//TODO : 0x0084046A, 0x008403F3?, anim cam impacts?
 
-//ward		concentration 			self		concentration		self		0	0	2	0
-//muffle	fire & forget			self		constant efct		self		0	0.5	1	0
-//heal		concentration			self		constant efct		self		0	0	2	0
-//trans		fire & forget			self		fire & forget		self		0	0.5	1	0
-//flame		concentration			aimed		concentration		aimed		0	0	2	2
-//light		fire & forget			aimed		fire & forget		aimed		0	0	1	2
-//skel		fire & forget			targloc		fire & forget		targloc		0	2	1	4
-//																			0x74, 0x78, 0x7C, 0x80
 bool CameraController::ThirdPersonBehavior(ThirdPersonState* pCamState) {
-	PlayerCharacter* player = *g_thePlayer;
+	Actor* player = GetCurrentCameraTarget();
 	if (!pCamState->cameraNode || !pCamState->camera)
 		return false;
 	camVanillaBase = player->pos + NiPoint3(0, 0, pCamState->cameraNode->m_localTransform.pos.z);
@@ -583,7 +582,7 @@ bool CameraController::HorseBehavior(HorseCameraState* pCamState) {
 	PlayerCharacter* player = *g_thePlayer;
 	if (!pCamState->cameraNode || !pCamState->camera)
 		return false;
-	Actor* horse = GetCurrentHorse();
+	Actor* horse = GetCurrentCameraTarget();
 	if (!horse)
 		return false;
 	float saddleOffsetZ = CALL_MEMBER_FN((ActorEx*)horse, GetSaddleOffsetZ)();
