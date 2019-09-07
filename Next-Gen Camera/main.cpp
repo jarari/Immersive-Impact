@@ -65,12 +65,18 @@ extern "C" {
 		skseMsg->RegisterListener(skse->GetPluginHandle(), "SKSE", [](SKSEMessagingInterface::Message* msg) -> void {
 			if (msg->type == SKSEMessagingInterface::kMessage_PreLoadGame) {
 				CameraController::hookActive = false;
+				CameraController::papyrusActive = false;
 			}
 			else if (msg->type == SKSEMessagingInterface::kMessage_PostLoadGame) {
 				if ((bool)msg->data) {
 					CameraController::hookActive = true;
+					CameraController::ResetLastDispatcher();
 					_MESSAGE("Game loaded successfully.");
 				}
+			}
+			else if (msg->type == SKSEMessagingInterface::kMessage_NewGame) {
+				CameraController::papyrusActive = false;
+				CameraController::ResetLastDispatcher();
 			}
 		});
 

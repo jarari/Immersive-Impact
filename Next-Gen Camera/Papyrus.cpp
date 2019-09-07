@@ -24,7 +24,9 @@ void CustomEvent::SyncDefault(UInt32 type, float val) {
 void RegisterScript(TESQuest* thisForm) {
 	if (!thisForm)
 		return;
+	g_mainScriptRegs.Clear();
 	g_mainScriptRegs.Register<TESQuest>(kFormType_Quest, thisForm);
+	CameraController::papyrusActive = true;
 	_MESSAGE("Papyrus registered");
 }
 

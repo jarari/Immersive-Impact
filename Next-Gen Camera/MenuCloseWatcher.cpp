@@ -39,6 +39,8 @@ EventResult MenuCloseWatcher::ReceiveEvent(MenuOpenCloseEvent* evn, EventDispatc
 	}
 	else if (uistr && evn->menuName == uistr->mainMenu && evn->opening) {
 		CameraController::hookActive = false;
+		CameraController::papyrusActive = false;
+		CameraController::ResetLastDispatcher();
 	}
 	return kEvent_Continue;
 }
