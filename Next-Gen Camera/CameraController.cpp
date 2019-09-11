@@ -352,10 +352,6 @@ void CameraController::MainBehavior() {
 						camUpdater->posX = l_delta.x;
 						camUpdater->posY = l_delta.y;
 						camUpdater->posZ = l_delta.z;
-
-						*(float*)((UInt32)pCamState + 0x48) += (*(float*)((UInt32)pCamState + 0x3C) - *(float*)((UInt32)pCamState + 0x48)) / 5.0f;
-						*(float*)((UInt32)pCamState + 0x4C) += (*(float*)((UInt32)pCamState + 0x40) - *(float*)((UInt32)pCamState + 0x4C)) / 5.0f;
-						*(float*)((UInt32)pCamState + 0x50) += (*(float*)((UInt32)pCamState + 0x44) - *(float*)((UInt32)pCamState + 0x50)) / 5.0f;
 					}
 					else if (processDialogueCam && isInDialogue && pCamState == pCam->cameraStates[PlayerCamera::kCameraState_ThirdPerson2] && !IsInMenuMode()) {
 						processCam = true;
@@ -442,6 +438,12 @@ void CameraController::MainBehavior() {
 								*(float*)((UInt32)pCam + 0xB8),
 								*(float*)((UInt32)pCam + 0xBC));
 						}
+					}
+
+					if (behaviorExists) {
+						*(float*)((UInt32)pCamState + 0x48) += (*(float*)((UInt32)pCamState + 0x3C) - *(float*)((UInt32)pCamState + 0x48)) / 5.0f;
+						*(float*)((UInt32)pCamState + 0x4C) += (*(float*)((UInt32)pCamState + 0x40) - *(float*)((UInt32)pCamState + 0x4C)) / 5.0f;
+						*(float*)((UInt32)pCamState + 0x50) += (*(float*)((UInt32)pCamState + 0x44) - *(float*)((UInt32)pCamState + 0x50)) / 5.0f;
 					}
 				}
 			}
